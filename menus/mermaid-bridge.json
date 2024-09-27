@@ -1,0 +1,25 @@
+{
+  "menu": [
+    {
+      "id": "tools",
+      "submenu": [
+        {
+          "label": "Mermaid Bridge",
+          "id": "tool.mermaid-bridge",
+          "submenu": [
+            {
+              "label": "Import from Mermaid",
+              "id": "tool.mermaid-bridge-import",
+              "command": "mermaid-bridge:import"
+            },
+            {
+              "label": "Export to Mermaid",
+              "id": "tool.mermaid-bridge-export",
+              "command": "mermaid-bridge:export"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

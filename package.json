@@ -1,0 +1,21 @@
+{
+  "name": "mermaid-bridge",
+  "title": "Mermaid Bridge",
+  "description": "A StarUML extension to convert Mermaid diagrams to UML and vice versa",
+  "version": "1.0.0",
+  "keywords": [
+    "mermaid",
+    "import",
+    "export"
+  ],
+  "author": {
+    "name": "Peter van de Pas",
+    "email": "peter.vdpas@gmail.com",
+    "url": "https://github.com/petervdpas"
+  },
+  "license": "MIT",
+  "engines": {
+    "staruml": ">=4.0.0"
+  },
+  "main": "main.js"
+}

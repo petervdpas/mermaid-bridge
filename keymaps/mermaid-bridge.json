@@ -1,0 +1,4 @@
+{
+    "cmdctrl-m": "mermaid-bridge.import",
+    "cmdctrl-e": "mermaid-bridge.export"
+}
