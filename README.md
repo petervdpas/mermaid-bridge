@@ -34,6 +34,9 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 2. Paste or upload your Mermaid class diagram code.
 3. The diagram will be converted into a StarUML class diagram and added to your project.
 
+![Mermaid Diagram after moving stuff around](images/MermaidDiagram.png)
+
+
 ### Exporting to Mermaid
 
 1. Go to `Tools > Mermaid Bridge > Export to Mermaid`.
