@@ -1,6 +1,4 @@
-/*
-    mermaidParser.js
-*/
+// mermaidParser.js
 
 function translateVisibility(symbol) {
     switch (symbol) {

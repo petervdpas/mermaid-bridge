@@ -1,15 +1,18 @@
+// main.js
+
 const { parseMermaidToJSON } = require('./mermaidParser');
+const { convertToMermaid } = require('./umlProcess');
 const { generateUML } = require('./umlGenerator');
 
 function importMermaid() {
     app.dialogs.showTextDialog("Enter your Mermaid-diagram")
         .then(async function ({ buttonId, returnValue }) {
             if (buttonId === 'ok') {
-                const mermaidCode = returnValue;
+                var mermaidCode = returnValue;
 
                 if (mermaidCode) {
                     try {
-                        const parsedDiagram = parseMermaidToJSON(mermaidCode);
+                        var parsedDiagram = parseMermaidToJSON(mermaidCode);
                         console.log("Parsed Mermaid-diagram:", parsedDiagram);
                         generateUML(parsedDiagram);
                     } catch (err) {
@@ -23,14 +26,19 @@ function importMermaid() {
 }
 
 function exportToMermaid() {
-
-    /*
-    const umlData = app.repository.select();  // Selecteer UML-objecten
-    const mermaidCode = convertToMermaid(umlData);
-    console.log(mermaidCode);
-    */
-
-    app.dialogs.showInfoDialog("Export to Mermaid is not implemented just yet.");
+    try {
+        var selectedModels = app.selections.getSelectedModels()
+        if (selectedModels.length === 0) {
+            app.dialogs.showInfoDialog("No models selected");
+            return;
+        }
+        var selectedModel = selectedModels[0];
+        var mermaidCode = convertToMermaid(selectedModel);
+        app.dialogs.showTextDialog("Generated Mermaid Code:", mermaidCode);
+    }
+    catch (err) {
+        app.dialogs.showErrorDialog(err.message);
+    }
 }
 
 function init() {

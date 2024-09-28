@@ -1,6 +1,4 @@
-/*
-UMLGenerator.js
-*/
+// UMLGenerator.js
 
 function addElement(elemType, parent, field, inElements) {
     app.factory.createModel({
