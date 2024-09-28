@@ -16,7 +16,7 @@ function addElement(elemType, parent, field, inElements) {
 function createRelationship(relation, tailView, headView, diagram) {
 
     if (!tailView || !headView) {
-        app.dialogs.showErrorDialog("Parent or child class is missing.");
+        app.toast.error("Parent or child class is missing.");
         return;
     }
 
@@ -36,7 +36,7 @@ function createRelationship(relation, tailView, headView, diagram) {
             break;
         default:
             // Onbekend relatie-type, geef een waarschuwing en stop
-            app.dialogs.showErrorDialog(`Unknown relationship type: ${relation.type}`);
+            app.toast.error(`Unknown relationship type: ${relation.type}`);
             console.warn(`Encountered unknown relationship type: ${relation.type}`);
             return; // Stop verdere verwerking als het type onbekend is
     }
@@ -76,19 +76,19 @@ function createRelationship(relation, tailView, headView, diagram) {
 function generateUML(parsedDiagram) {
 
     if (!parsedDiagram) {
-        app.dialogs.showErrorDialog("Recieved NO mermaid code!");
+        app.toast.error("Recieved NO mermaid code!");
         return;
     }
 
     if (parsedDiagram.type !== 'classDiagram') {
-        app.dialogs.showErrorDialog("Class Diagram was not found!");
+        app.toast.error("Class Diagram was not found!");
         return;
     }
 
     // Haal het project op
     var project = app.repository.select("@Project")[0];
     if (!project) {
-        app.dialogs.showErrorDialog("No active project found.");
+        app.toast.error("No active project found.");
         return;
     }
 

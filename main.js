@@ -16,11 +16,11 @@ function importMermaid() {
                         console.log("Parsed Mermaid-diagram:", parsedDiagram);
                         generateUML(parsedDiagram);
                     } catch (err) {
-                        app.dialogs.showErrorDialog(err.message);
+                        app.toast.error(err.message);
                     }
                 }
             } else {
-                app.dialogs.showInfoDialog("Input was cancelled")
+                app.toast.info("Input was cancelled")
             }
         });
 }
@@ -29,15 +29,16 @@ function exportToMermaid() {
     try {
         var selectedModels = app.selections.getSelectedModels()
         if (selectedModels.length === 0) {
-            app.dialogs.showInfoDialog("No models selected");
+            app.toast.info("No models selected");
             return;
         }
         var selectedModel = selectedModels[0];
         var mermaidCode = convertToMermaid(selectedModel);
+
         app.dialogs.showTextDialog("Generated Mermaid Code:", mermaidCode);
     }
     catch (err) {
-        app.dialogs.showErrorDialog(err.message);
+        app.toast.error(err.message);
     }
 }
 

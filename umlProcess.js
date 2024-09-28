@@ -54,8 +54,8 @@ function processRelationshipRecursive(element, relationshipBuffer) {
             ({ end1: { reference: { name: to }, aggregation }, end2: { reference: { name: from }, navigable } } = element);
 
             // Determine relationship type
-            relationSymbol = (aggregation === 'composite') ? '*--' :
-                             (aggregation === 'shared') ? 'o--' :
+            relationSymbol = (element.end2.aggregation === 'composite') ? '*--' :
+                             (element.end2.aggregation === 'shared') ? 'o--' :
                              (checkNavigable(element.end1.navigable) && checkNavigable(element.end2.navigable)) ? '<-->' :
                              (checkNavigable(element.end1.navigable)) ? '-->' : '--';
         }
