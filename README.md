@@ -44,8 +44,7 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 
 ## Example Mermaid Syntax
 
-You can edit the mermaid below here: [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/).
-You can also find more examples in the [Mermaid documentation](https://mermaid-js.github.io/mermaid/#/).
+> You can try and edit the `mermaid-code` I added below, here: [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/). You can also find more examples in the [Mermaid documentation](https://mermaid.js.org/intro/).
 
 **The following is an example of a CLASS diagram in Mermaid syntax:**
 
