@@ -63,21 +63,23 @@ function processRelationshipRecursive(element, relationshipBuffer) {
 
         if (element instanceof type.UMLGeneralization)
         {
-            from = element.source.name;
-            to = element.target.name;
+            to = element.source.name;
+            from = element.target.name;
+
             relationSymbol = '<|--';  // inheritance
 
         } else {
 
-            from = element.end1.reference.name;
-            to = element.end2.reference.name;
+            to = element.end1.reference.name;
+            from = element.end2.reference.name;
+
             if (element.end2.aggregation === 'composite') {
                 relationSymbol = '*--';   // composition
             } else if (element.end2.aggregation === 'shared') {
                 relationSymbol = 'o--';   // aggregation
-            } else if (checkNavigable(element.end1.navigable)) {
-                relationSymbol = '-->';  // bidirectional association
             } else if (checkNavigable(element.end1.navigable) && checkNavigable(element.end2.navigable)) {
+                relationSymbol = '<-->';  // bidirectional association
+            } else if (checkNavigable(element.end1.navigable) && !checkNavigable(element.end2.navigable)) {
                 relationSymbol = '-->';   // directed association
             }
         }
@@ -88,7 +90,7 @@ function processRelationshipRecursive(element, relationshipBuffer) {
         }
 
         // Add the relationship to the buffer to append later
-        relationshipBuffer.push(`${to} ${relationSymbol} ${from}${relationLabel}`);
+        relationshipBuffer.push(`${from} ${relationSymbol} ${to}${relationLabel}`);
     }
 
     // Recursively check the owned elements of the current element
@@ -101,7 +103,7 @@ function processRelationshipRecursive(element, relationshipBuffer) {
 
 // Helper function for navigable
 function checkNavigable(navigable) {
-    navigable === "navigable" ? true : false;
+    return (navigable === "navigable") ? true : false;
 }
 
 // Helper function to translate visibility
