@@ -8,13 +8,13 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 
 - **Import from Mermaid**: Convert a Mermaid class diagram into a StarUML model.
 - **Export to Mermaid**: Convert a StarUML class diagram into Mermaid syntax.
-- **Supported Relationships**:
-  - Inheritance (`<|--`)
-  - Aggregation (`o--`)
-  - Composition (`*--`)
-  - Directed association (`-->`)
-  - Bidirectional association (`<-->`)
-  - Undirected association (`--`)
+- **Supported Mermaid Relationships**:
+  - Inheritance: `<|--`
+  - Aggregation: `o--`
+  - Composition: `*--`
+  - Directed Association: `-->`
+  - Bidirectional Association: `<-->`
+  - Undirected Association: `--`
 
 ## Installation
 
@@ -115,15 +115,6 @@ classDiagram
    Cat *-- House : lives in
    House o-- Room : contains
 ```
-
-## Supported Mermaid Relationships
-
-- Inheritance: `<|--`
-- Aggregation: `o--`
-- Composition: `*--`
-- Directed Association: `-->`
-- Bidirectional Association: `<-->`
-- Undirected Association: `--`
 
 ## Contributing
 
