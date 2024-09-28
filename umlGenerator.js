@@ -1,77 +1,6 @@
 // UMLGenerator.js
 
-function addElement(elemType, parent, field, inElements) {
-    app.factory.createModel({
-        id: elemType,
-        parent: parent,
-        field: field,
-        modelInitializer: function (elem) {
-            elem.name = inElements.name;
-            elem.type = inElements.type || inElements.returnType;
-            elem.visibility = inElements.visibility;
-        }
-    });
-}
-
-function createRelationship(relation, tailView, headView, diagram) {
-
-    if (!tailView || !headView) {
-        app.toast.error("Parent or child class is missing.");
-        return;
-    }
-
-    let elemType;
-
-    // Bepaal het type relatie
-    switch (relation.type) {
-        case 'inheritance':
-            elemType = "UMLGeneralization";
-            break;
-        case 'association':
-        case 'directedAssociation':
-        case 'bidirectionalAssociation':
-        case 'aggregation':
-        case 'composition':
-            elemType = "UMLAssociation";
-            break;
-        default:
-            // Onbekend relatie-type, geef een waarschuwing en stop
-            app.toast.error(`Unknown relationship type: ${relation.type}`);
-            console.warn(`Encountered unknown relationship type: ${relation.type}`);
-            return; // Stop verdere verwerking als het type onbekend is
-    }
-
-    var options = {
-        id: elemType,
-        parent: diagram._parent,
-        diagram: diagram,
-        tailView: tailView,
-        headView: headView,
-        tailModel: tailView.model,
-        headModel: headView.model,
-        modelInitializer: function (elem) {
-            elem.name = relation.label;
-        }
-    }
-
-    var relationView = app.factory.createModelAndView(options);
-
-    switch (relation.type) {
-        case 'directedAssociation':
-            relationView.model.end1.navigable = "navigable";
-            break;
-        case 'bidirectionalAssociation':
-            relationView.model.end1.navigable = "navigable";
-            relationView.model.end2.navigable = "navigable";
-            break;
-        case 'aggregation':
-            relationView.model.end2.aggregation = "shared";
-            break;
-        case 'composition':
-            relationView.model.end2.aggregation = "composite";
-            break;
-    }
-}
+const { createDiagram, createModel, createModelAndView, addElement, createRelationship } = require('./umlFactory');
 
 function generateUML(parsedDiagram) {
 
@@ -93,23 +22,18 @@ function generateUML(parsedDiagram) {
     }
 
     // Maak altijd een nieuw model en diagram aan
-    var importClassModel = app.factory.createModel({
-        id: "UMLModel",
+    var importClassModel = createModel({
+        idType: "UMLModel",
         parent: project,
-        modelInitializer: model => {
-            model.name = "Imported Mermaid";
-        }
+        name: "Imported Class Model"
     });
 
-    var diagramOptions = {
-        id: "UMLClassDiagram",
+    var classDiagram = createDiagram({
+        idType: "UMLClassDiagram",
         parent: importClassModel,
-        diagramInitializer: function (dgm) {
-          dgm.name = "MermaidDiagram";
-          dgm.defaultDiagram = true;
-        }
-      }
-    var classDiagram = app.factory.createDiagram(diagramOptions);
+        name: "Mermaid Class Diagram",
+        defaultDiagram: true
+    });
 
     // Houd een mapping bij van klasse-namen naar UMLClass-objecten
     const classViewMap = {};
@@ -117,14 +41,13 @@ function generateUML(parsedDiagram) {
     // Voor elke klasse in het parsed diagram, maak een UMLClass aan
     parsedDiagram.classes.forEach(cls => {
 
-        var newClass = app.factory.createModelAndView({
-            id: "UMLClass",
+        var newClass = createModelAndView({
+            idType: "UMLClass",
             parent: classDiagram._parent,
             diagram: classDiagram,
-            modelInitializer: function (elem) {
-                elem.name = cls.name;
-            }
-        });
+            nameKey: "name",
+            nameValue: cls.name
+        }) 
 
         classViewMap[cls.name] = newClass;
 
