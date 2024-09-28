@@ -36,7 +36,6 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 
 ![Mermaid Diagram after moving stuff around](images/MermaidDiagram.png)
 
-
 ### Exporting to Mermaid
 
 1. Go to `Tools > Mermaid Bridge > Export to Mermaid`.
@@ -44,6 +43,9 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 3. The resulting Mermaid code will be displayed, ready to be copied or saved.
 
 ## Example Mermaid Syntax
+
+You can edit the mermaid below here: [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/).
+You can also find more examples in the [Mermaid documentation](https://mermaid-js.github.io/mermaid/#/).
 
 **The following is an example of a CLASS diagram in Mermaid syntax:**
 
