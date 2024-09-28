@@ -49,6 +49,10 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 **The following is an example of a CLASS diagram in Mermaid syntax:**
 
 ```plaintext
+---
+title: Cats and Dogs
+author: Peter van de Pas
+---
 classDiagram
    class Animal {
       +String name
@@ -85,6 +89,10 @@ classDiagram
 ```
 
 ```mermaid
+---
+title: Cats and Dogs
+author: Peter van de Pas
+---
 classDiagram
    class Animal {
       +String name
