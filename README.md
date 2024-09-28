@@ -45,7 +45,7 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 
 ## Example Mermaid Syntax
 
-The following is an example of a class diagram in Mermaid syntax:
+**The following is an example of a CLASS diagram in Mermaid syntax:**
 
 ```plaintext
 classDiagram
@@ -117,6 +117,58 @@ classDiagram
    Dog *-- House : lives in
    Cat *-- House : lives in
    House o-- Room : contains
+```
+
+**The following is an example of a ER diagram in Mermaid syntax:**
+
+```plaintext
+erDiagram
+    CUSTOMER {
+        string name
+        int age
+    }
+    ORDER {
+        string orderNumber
+        date orderDate
+    }
+    LINE-ITEM {
+        int quantity
+        float price
+    }
+    DELIVERY-ADDRESS {
+        string street
+        string city
+        string postalCode
+    }
+    
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
+```
+
+```mermaid
+erDiagram
+    CUSTOMER {
+        string name
+        int age
+    }
+    ORDER {
+        string orderNumber
+        date orderDate
+    }
+    LINE-ITEM {
+        int quantity
+        float price
+    }
+    DELIVERY-ADDRESS {
+        string street
+        string city
+        string postalCode
+    }
+    
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE-ITEM : contains
+    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
 ```
 
 ## Contributing
