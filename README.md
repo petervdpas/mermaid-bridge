@@ -74,7 +74,9 @@ classDiagram
    Animal <|-- Cat
    Dog <--> Cat : friendship
    Dog --> Cat : chases
+   Cat --> Dog : scratches
    Dog *-- House : lives in
+   Cat *-- House : lives in
    House o-- Room : contains
 ```
 
@@ -108,7 +110,9 @@ classDiagram
    Animal <|-- Cat
    Dog <--> Cat : friendship
    Dog --> Cat : chases
+   Cat --> Dog : scratches
    Dog *-- House : lives in
+   Cat *-- House : lives in
    House o-- Room : contains
 ```
 
