@@ -139,9 +139,13 @@ function parseERDiagramRelationship(line, relationships) {
     let rightType = null;
     let connector = null;
 
+    // Split the line into the relationship part and the label part (after the colon)
+    const [relationshipPart, labelPart] = line.split(':').map(part => part.trim());
+    const label = labelPart || null;  // The label (e.g., "uses")
+
     // First, find the connector (either solid or weak)
-    const connectorPattern = relationshipTypes['erDiagram'].find(rel => 
-        line.includes(rel.pattern) && (rel.type === 'Connector' || rel.type === 'WeakConnector')
+    const connectorPattern = relationshipTypes['erDiagram'].find(rel =>
+        relationshipPart.includes(rel.pattern) && (rel.type === 'Connector' || rel.type === 'WeakConnector')
     );
     if (connectorPattern) {
         connector = connectorPattern.pattern;
@@ -152,8 +156,8 @@ function parseERDiagramRelationship(line, relationships) {
         return;
     }
 
-    // Extract the left and right side of the relationship
-    const [fromSide, toSide] = line.split(connector).map(part => part.trim());
+    // Extract the left and right side of the relationship (before and after the connector)
+    const [fromSide, toSide] = relationshipPart.split(connector).map(part => part.trim());
 
     // Find the left pattern (before the connector)
     const leftPattern = relationshipTypes['erDiagram'].find(rel => fromSide.endsWith(rel.pattern));
@@ -172,20 +176,17 @@ function parseERDiagramRelationship(line, relationships) {
     const to = toSide.replace(rightPattern ? rightPattern.pattern : '', '').trim();
 
     if (leftType && rightType && from && to) {
-        const relationshipType = `${leftType}To${rightType}`;
-        const [_, labelPart] = line.split(':').map(part => part.trim());
-        const label = labelPart || null;
-
         // Determine if it's a weak relationship based on the connector
         const isWeak = connector === '..';
 
-        // Push the relationship into the array
+        // Push the relationship into the array with fromType, toType, label, and weak flag
         relationships.push({
-            from: from,
-            to: to,
-            type: relationshipType,
-            label: label,
-            weak: isWeak  // Add weak flag for dashed lines
+            from: from,               // The "from" entity
+            fromType: leftType,       // The type of the "from" entity (e.g., ZeroOrOne, ExactlyOne)
+            to: to,                   // The "to" entity
+            toType: rightType,        // The type of the "to" entity (e.g., ZeroOrMany, OneOrMany)
+            label: label,             // The relationship label (e.g., "places", "uses")
+            weak: isWeak              // Flag indicating if it's a weak relationship (dashed line)
         });
     } else {
         console.warn(`Could not parse ER diagram relationship: ${line}`);
