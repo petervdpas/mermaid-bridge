@@ -10,8 +10,8 @@ const {
 // Function to create relationships between UML elements
 function createClassRelationship(relation, tailView, headView, diagram) {
 
-    if (!tailView || !headView) {
-        app.toast.error("Parent or child class is missing.");
+    if (!diagram || !tailView || !headView) {
+        app.toast.error("ClassDiagram, Parent- or child-class is missing.");
         return;
     }
 

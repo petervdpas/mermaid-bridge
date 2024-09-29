@@ -10,11 +10,14 @@ const {
 // Function to create relationships between ERD entities
 function createERDRelationship(relation, tailView, headView, diagram) {
 
-    if (!tailView || !headView) {
-        app.toast.error("Parent or child entity is missing.");
+    console.log(relation);
+    
+    if (!diagram || !tailView || !headView) {
+        app.toast.error("ERDiagram, Parent- or child-entity is missing.");
         return;
     }
 
+    /*
     const options = {
         id: "ERDAssociation",  // General association for now
         parent: diagram._parent,
@@ -34,6 +37,7 @@ function createERDRelationship(relation, tailView, headView, diagram) {
     // Assign multiplicity based on the fromType and toType
     relationView.model.end1.multiplicity = getMultiplicity(relation.fromType);
     relationView.model.end2.multiplicity = getMultiplicity(relation.toType);
+    */
 }
 
 // Helper function to translate types (like `ZeroOrOne`) into multiplicity values
@@ -88,10 +92,10 @@ function generateERDiagram(project, parsedDiagram) {
     });
 
     // Process relationships between entities
-    parsedDiagram.relationships.forEach(rel => {
-        const tailView = entityViewMap[rel.to];
-        const headView = entityViewMap[rel.from];
-        createERDRelationship(rel, tailView, headView, erDiagram);
+    parsedDiagram.relationships.forEach(relation => {
+        const tailView = entityViewMap[relation.to];
+        const headView = entityViewMap[relation.from];
+        createERDRelationship(relation, tailView, headView, erDiagram);
     });
 }
 
