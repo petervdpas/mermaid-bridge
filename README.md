@@ -17,10 +17,11 @@ This StarUML extension provides a two-way bridge for converting diagrams between
     - Bidirectional Association: `<-->`
     - Undirected Association: `--`
   - entity-relationship-diagrams: `erDiagram`
-    - One-to-One Relationship: `||--||`
-    - One-to-Many Relationship: `||--o{`
-    - Many-to-Many Relationship: `||--|{`
-    - Many-to-One Relationship: `}|..|`
+    - To Relationship-connector: `--`
+    - Zero-Or-One Relationship: `|o` & `o|`
+    - Exactly-One Relationship: `||` & `||`
+    - Zero-Or-Many Relationship: `}o` & `o{`
+    - One-Or-Many Relationship: `}|` & `|{`
 
 ## Installation
 
