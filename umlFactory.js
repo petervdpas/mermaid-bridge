@@ -64,8 +64,8 @@ function addERDElement(elemType, parent, field, inElements) {
         modelInitializer: function (elem) {
             elem.name = inElements.name;
             elem.type = translateType(inElements.type);
-            elem.length = properties.length;
-            elem.nullable = properties.nullable;
+            elem.length = properties.length || '';
+            elem.nullable = properties.nullable || false;
         }
     });
 }

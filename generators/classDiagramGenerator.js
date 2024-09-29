@@ -8,7 +8,7 @@ const {
 } = require('../umlFactory');
 
 // Function to create relationships between UML elements
-function createRelationship(relation, tailView, headView, diagram) {
+function createClassRelationship(relation, tailView, headView, diagram) {
 
     if (!tailView || !headView) {
         app.toast.error("Parent or child class is missing.");
@@ -41,7 +41,7 @@ function createRelationship(relation, tailView, headView, diagram) {
         tailModel: tailView.model,
         headModel: headView.model,
         modelInitializer: function (elem) {
-            elem.name = relation.label;
+            elem.name = relation.label || '';
         }
     };
 
@@ -107,7 +107,7 @@ function generateClassDiagram(project, parsedDiagram) {
     parsedDiagram.relationships.forEach(rel => {
         const tailView = classViewMap[rel.to];
         const headView = classViewMap[rel.from];
-        createRelationship(rel, tailView, headView, classDiagram);
+        createClassRelationship(rel, tailView, headView, classDiagram);
     });
 }
 
