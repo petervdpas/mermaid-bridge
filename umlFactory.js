@@ -1,5 +1,7 @@
 // umlFactory.js
 
+const { translateType } = require('./utils/utils');
+
 // Generic function to create a diagram
 function createDiagram({ idType, parent, name, defaultDiagram = false }) {
     return app.factory.createDiagram({
@@ -31,20 +33,6 @@ function createModelAndView({ idType, parent, diagram, nameKey, nameValue }) {
         diagram: diagram,
         modelInitializer: function (elem) {
             elem[nameKey] = nameValue;  // Use the passed key-value for name
-        }
-    });
-}
-
-// Generic function to add elements (e.g., attributes, methods) to a class or entity
-function addElement(elemType, parent, field, inElements) {
-    app.factory.createModel({
-        id: elemType,
-        parent: parent,
-        field: field,
-        modelInitializer: function (elem) {
-            elem.name = inElements.name;
-            elem.type = inElements.type || inElements.returnType;
-            elem.visibility = inElements.visibility;
         }
     });
 }
@@ -106,4 +94,39 @@ function createRelationship(relation, tailView, headView, diagram) {
     }
 }
 
-module.exports = { createDiagram, createModel, createModelAndView, addElement, createRelationship };
+// Generic function to add elements (e.g., attributes, methods) to a UML class
+function addClassElement(elemType, parent, field, inElements) {
+    app.factory.createModel({
+        id: elemType, // e.g., "UMLAttribute", "UMLOperation"
+        parent: parent,
+        field: field, // e.g., "attributes" or "operations"
+        modelInitializer: function (elem) {
+            elem.name = inElements.name;
+            elem.type = inElements.type || inElements.returnType;
+            elem.visibility = inElements.visibility;
+        }
+    });
+}
+
+// Generic function to add elements (columns) to an ERD entity
+function addERDElement(elemType, parent, field, inElements) {
+    app.factory.createModel({
+        id: elemType,
+        parent: parent,
+        field: field,
+        modelInitializer: function (elem) {
+            elem.name = inElements.name;
+            elem.type = translateType(inElements.type);
+            //elem.length = inElements.Length;
+            //elem.nullable = inElements.IsNullable;
+        }
+    });
+}
+
+module.exports = { 
+    createDiagram, 
+    createModel, 
+    createModelAndView, 
+    createRelationship, 
+    addClassElement, 
+    addERDElement };

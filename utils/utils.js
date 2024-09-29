@@ -1,5 +1,58 @@
 // utils.js
 
+// Function to translate SQL data types into StarUML/ERD types
+function translateType(sqlType) {
+    switch (sqlType.toLowerCase()) {
+        case 'int':
+        case 'integer':
+            return 'INTEGER';  // Translate to INTEGER
+        case 'bigint':
+            return 'BIGINT';  // Translate to BIGINT
+        case 'smallint':
+            return 'SMALLINT';  // Translate to SMALLINT
+        case 'tinyint':
+        case 'bit':
+            return 'BIT';  // Translate to BIT
+        case 'decimal':
+        case 'numeric':
+            return 'DECIMAL';  // Translate to DECIMAL
+        case 'float':
+        case 'real':
+            return 'FLOAT';  // Translate to FLOAT
+        case 'double':
+            return 'DOUBLE';  // Translate to DOUBLE
+        case 'char':
+        case 'nchar':
+            return 'CHAR';  // Translate to CHAR
+        case 'varchar':
+        case 'nvarchar':
+        case 'text':
+            return 'VARCHAR';  // Translate to VARCHAR
+        case 'binary':
+            return 'BINARY';  // Translate to BINARY
+        case 'varbinary':
+            return 'VARBINARY';  // Translate to VARBINARY
+        case 'blob':
+            return 'BLOB';  // Translate to BLOB
+        case 'date':
+            return 'DATE';  // Translate to DATE
+        case 'time':
+            return 'TIME';  // Translate to TIME
+        case 'datetime':
+        case 'datetime2':
+            return 'DATETIME';  // Translate to DATETIME
+        case 'timestamp':
+            return 'TIMESTAMP';  // Translate to TIMESTAMP
+        case 'boolean':
+        case 'bool':
+            return 'BOOLEAN';  // Translate to BOOLEAN
+        case 'geometry':
+            return 'GEOMETRY';  // Translate to GEOMETRY
+        default:
+            return sqlType;  // If no match is found, use the original type
+    }
+}
+
 const relationshipTypes = {
     classDiagram: [
         { type: 'inheritance', pattern: '<|--' },
@@ -46,4 +99,4 @@ function parseRelationship(line, relationships, diagramType) {
     }
 }
 
-module.exports = { translateVisibility, isRelationshipLine, parseRelationship };
+module.exports = { translateType, translateVisibility, isRelationshipLine, parseRelationship };

@@ -131,50 +131,58 @@ classDiagram
 **The following is an example of a ER diagram in Mermaid syntax:**
 
 ```plaintext
+---
+title: Customer Orders
+author: Peter van de Pas
+---
 erDiagram
     CUSTOMER {
-        string name
-        int age
+        varchar name "length: 100, nullable: true"
+        int age "nullable: true"
     }
     ORDER {
-        string orderNumber
-        date orderDate
+        varchar orderNumber "length: 20, nullable: true"
+        date orderDate "nullable: true"
     }
     LINE-ITEM {
-        int quantity
-        float price
+        int quantity "nullable: true"
+        decimal price "nullable: true"
     }
     DELIVERY-ADDRESS {
-        string street
-        string city
-        string postalCode
+        varchar street "length: 100, nullable: true"
+        varchar city "length: 50, nullable: true"
+        varchar postalCode "length: 10, nullable: true"
     }
-    
+
     CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE-ITEM : contains
     CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
 ```
 
 ```mermaid
+---
+title: Customer Orders
+author: Peter van de Pas
+---
 erDiagram
     CUSTOMER {
-        string name
-        int age
+        varchar name "length: 100, nullable: true"
+        int age "nullable: true"
     }
     ORDER {
-        string orderNumber
-        date orderDate
+        varchar orderNumber "length: 20, nullable: true"
+        date orderDate "nullable: true"
     }
     LINE-ITEM {
-        int quantity
-        float price
+        int quantity "nullable: true"
+        decimal price "nullable: true"
     }
     DELIVERY-ADDRESS {
-        string street
-        string city
-        string postalCode
+        varchar street "length: 100, nullable: true"
+        varchar city "length: 50, nullable: true"
+        varchar postalCode "length: 10, nullable: true"
     }
-    
+
     CUSTOMER ||--o{ ORDER : places
     ORDER ||--|{ LINE-ITEM : contains
     CUSTOMER }|..|{ DELIVERY-ADDRESS : uses

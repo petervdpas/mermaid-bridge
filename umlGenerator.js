@@ -1,75 +1,128 @@
-// UMLGenerator.js
+// umlGenerator.js
 
-const { createDiagram, createModel, createModelAndView, addElement, createRelationship } = require('./umlFactory');
+const { 
+    createDiagram, 
+    createModel, 
+    createModelAndView, 
+    createRelationship, 
+    addClassElement, 
+    addERDElement } = require('./umlFactory');
 
 function generateUML(parsedDiagram) {
-
     if (!parsedDiagram) {
-        app.toast.error("Recieved NO mermaid code!");
+        app.toast.error("Received NO mermaid code!");
         return;
     }
 
-    if (parsedDiagram.type !== 'classDiagram') {
-        app.toast.error("Class Diagram was not found!");
-        return;
-    }
-
-    // Haal het project op
-    var project = app.repository.select("@Project")[0];
+    // Fetch the project
+    const project = app.repository.select("@Project")[0];
     if (!project) {
         app.toast.error("No active project found.");
         return;
     }
 
-    // Maak altijd een nieuw model en diagram aan
-    var importClassModel = createModel({
+    // Handle different types of diagrams
+    switch (parsedDiagram.type) {
+        case 'classDiagram':
+            generateClassDiagram(project, parsedDiagram);
+            break;
+        
+        case 'erDiagram':
+            generateERDiagram(project, parsedDiagram);
+            break;
+
+        default:
+            app.toast.error(`Unsupported diagram type: ${parsedDiagram.type}`);
+            return;
+    }
+}
+
+// Function to generate a Class Diagram
+function generateClassDiagram(project, parsedDiagram) {
+    const importClassModel = createModel({
         idType: "UMLModel",
         parent: project,
         name: "Imported Class Model"
     });
 
-    var classDiagram = createDiagram({
+    const classDiagram = createDiagram({
         idType: "UMLClassDiagram",
         parent: importClassModel,
         name: "Mermaid Class Diagram",
         defaultDiagram: true
     });
 
-    // Houd een mapping bij van klasse-namen naar UMLClass-objecten
     const classViewMap = {};
 
-    // Voor elke klasse in het parsed diagram, maak een UMLClass aan
+    // Create UML classes and add attributes/methods
     parsedDiagram.classes.forEach(cls => {
-
-        var newClass = createModelAndView({
+        const newClass = createModelAndView({
             idType: "UMLClass",
             parent: classDiagram._parent,
             diagram: classDiagram,
             nameKey: "name",
             nameValue: cls.name
-        }) 
+        });
 
         classViewMap[cls.name] = newClass;
 
-        // Voeg attributen toe
         cls.attributes.forEach(attr => {
-            addElement("UMLAttribute", newClass.model, "attributes", attr);
+            addClassElement("UMLAttribute", newClass.model, "attributes", attr);
         });
 
-        // Voeg methoden toe
         cls.methods.forEach(method => {
-            addElement("UMLOperation", newClass.model, "operations", method);
+            addClassElement("UMLOperation", newClass.model, "operations", method);
         });
     });
 
-    // Verwerk relaties
+    // Process relationships between classes
     parsedDiagram.relationships.forEach(rel => {
-
         const tailView = classViewMap[rel.to];
         const headView = classViewMap[rel.from];
-
         createRelationship(rel, tailView, headView, classDiagram);
     });
+}
+
+// Function to generate an ER Diagram
+function generateERDiagram(project, parsedDiagram) {
+    const importEntityModel = createModel({
+        idType: "ERDDataModel",
+        parent: project,
+        name: "Imported ERD Model"
+    });
+
+    const erDiagram = createDiagram({
+        idType: "ERDDiagram",
+        parent: importEntityModel,
+        name: "Mermaid ER Diagram",
+        defaultDiagram: true
+    });
+
+    const entityViewMap = {};
+
+    // Create ERD entities and add fields
+    parsedDiagram.entities.forEach(entity => {
+        const newEntity = createModelAndView({
+            idType: "ERDEntity",
+            parent: erDiagram._parent,
+            diagram: erDiagram,
+            nameKey: "name",
+            nameValue: entity.name
+        });
+
+        entityViewMap[entity.name] = newEntity;
+
+        entity.attributes.forEach(attr => {
+            addERDElement("ERDColumn", newEntity.model, "columns", attr);
+        });
+    });
+
+    // Process relationships between entities
+    // parsedDiagram.relationships.forEach(rel => {
+    //     const tailView = entityViewMap[rel.to];
+    //     const headView = entityViewMap[rel.from];
+    //     createRelationship(rel, tailView, headView, erDiagram);
+    // });
 }
 
 module.exports = { generateUML };
