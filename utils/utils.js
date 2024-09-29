@@ -10,8 +10,8 @@ const relationshipTypes = {
         { type: 'association', pattern: '--' }
     ],
     erDiagram: [
-        { type: 'Connector', pattern: '--' },
-        { type: 'WeakConnector', pattern: '..' },
+        { type: 'IsStrong', pattern: '--' },
+        { type: 'IsWeak', pattern: '..' },
         { type: 'ZeroOrOne', pattern: '|o' },
         { type: 'ZeroOrOne', pattern: 'o|' },
         { type: 'ExactlyOne', pattern: '||' },
@@ -137,27 +137,27 @@ function parseClassDiagramRelationship(line, relationships) {
 function parseERDiagramRelationship(line, relationships) {
     let leftType = null;
     let rightType = null;
-    let connector = null;
+    let isWeak = false; // Assume it's not weak unless determined otherwise
 
     // Split the line into the relationship part and the label part (after the colon)
     const [relationshipPart, labelPart] = line.split(':').map(part => part.trim());
     const label = labelPart || null;  // The label (e.g., "uses")
 
-    // First, find the connector (either solid or weak)
+    // First, find the connector (either IsStrong or IsWeak)
     const connectorPattern = relationshipTypes['erDiagram'].find(rel =>
-        relationshipPart.includes(rel.pattern) && (rel.type === 'Connector' || rel.type === 'WeakConnector')
+        relationshipPart.includes(rel.pattern) && (rel.type === 'IsStrong' || rel.type === 'IsWeak')
     );
+    
     if (connectorPattern) {
-        connector = connectorPattern.pattern;
-    }
-
-    if (!connector) {
+        // Determine if the connector is weak based on its type
+        isWeak = connectorPattern.type === 'IsWeak';
+    } else {
         console.warn(`No connector found in line: ${line}`);
         return;
     }
 
     // Extract the left and right side of the relationship (before and after the connector)
-    const [fromSide, toSide] = relationshipPart.split(connector).map(part => part.trim());
+    const [fromSide, toSide] = relationshipPart.split(connectorPattern.pattern).map(part => part.trim());
 
     // Find the left pattern (before the connector)
     const leftPattern = relationshipTypes['erDiagram'].find(rel => fromSide.endsWith(rel.pattern));
@@ -176,9 +176,6 @@ function parseERDiagramRelationship(line, relationships) {
     const to = toSide.replace(rightPattern ? rightPattern.pattern : '', '').trim();
 
     if (leftType && rightType && from && to) {
-        // Determine if it's a weak relationship based on the connector
-        const isWeak = connector === '..';
-
         // Push the relationship into the array with fromType, toType, label, and weak flag
         relationships.push({
             from: from,               // The "from" entity
@@ -186,7 +183,7 @@ function parseERDiagramRelationship(line, relationships) {
             to: to,                   // The "to" entity
             toType: rightType,        // The type of the "to" entity (e.g., ZeroOrMany, OneOrMany)
             label: label,             // The relationship label (e.g., "places", "uses")
-            weak: isWeak              // Flag indicating if it's a weak relationship (dashed line)
+            weak: isWeak              // Flag indicating if it's a weak relationship (determined immediately)
         });
     } else {
         console.warn(`Could not parse ER diagram relationship: ${line}`);
