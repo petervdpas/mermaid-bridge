@@ -10,12 +10,12 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 - **Export to Mermaid**: Convert a StarUML class diagram into Mermaid syntax.
 - **Supported Mermaid Relationships**:
   - class-diagrams: `classDiagram`
-    - Inheritance: `<|--`
-    - Aggregation: `o--`
-    - Composition: `*--`
-    - Directed Association: `-->`
     - Bidirectional Association: `<-->`
     - Undirected Association: `--`
+    - Inheritance: `--|>` & `<|--`
+    - Aggregation: `o--` & `--o`
+    - Composition: `*--` & `--*`
+    - Directed Association: `-->` & `<--`
   - entity-relationship-diagrams: `erDiagram`
     - IsStrong Relationship: `--`
     - IsWeak Relationship: `..`
@@ -86,8 +86,8 @@ classDiagram
       +String name
       +void enter()
    }
-   Animal <|-- Dog
-   Animal <|-- Cat
+   Dog --|> Animal
+   Cat --|> Animal
    Dog <--> Cat : friendship
    Dog --> Cat : chases
    Cat --> Dog : scratches
@@ -126,8 +126,8 @@ classDiagram
       +String name
       +void enter()
    }
-   Animal <|-- Dog
-   Animal <|-- Cat
+   Dog --|> Animal
+   Cat --|> Animal
    Dog <--> Cat : friendship
    Dog --> Cat : chases
    Cat --> Dog : scratches

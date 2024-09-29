@@ -10,10 +10,14 @@ function parseClassDiagramRelationship(line, relationships) {
         const [from, to] = fromToPart.split(relationship.pattern).map(part => part.trim());
         const label = labelPart || null;
 
+        // If relationship is flipped, switch `from` and `to`
+        const parsedRelationship = relationship.flipped
+            ? { from: to, to: from }
+            : { from: from, to: to };
+
         // Push the parsed relationship into the array
         relationships.push({
-            from: from,
-            to: to,
+            ...parsedRelationship,
             type: relationship.type,
             label: label
         });

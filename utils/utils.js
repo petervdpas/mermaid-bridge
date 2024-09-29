@@ -2,12 +2,16 @@
 
 const relationshipTypes = {
     classDiagram: [
-        { type: 'inheritance', pattern: '<|--' },
-        { type: 'aggregation', pattern: 'o--' },
-        { type: 'composition', pattern: '*--' },
-        { type: 'bidirectionalAssociation', pattern: '<-->' },
-        { type: 'directedAssociation', pattern: '-->' },
-        { type: 'association', pattern: '--' }
+        { type: 'inheritance', pattern: '--|>', flipped: false },
+        { type: 'inheritance', pattern: '<|--', flipped: true },
+        { type: 'aggregation', pattern: 'o--', flipped: false },
+        { type: 'aggregation', pattern: '--o', flipped: true },
+        { type: 'composition', pattern: '*--', flipped: false }, 
+        { type: 'composition', pattern: '--*', flipped: true },
+        { type: 'bidirectionalAssociation', pattern: '<-->', flipped: false },
+        { type: 'directedAssociation', pattern: '-->', flipped: false },
+        { type: 'directedAssociation', pattern: '<--', flipped: true },
+        { type: 'association', pattern: '--', flipped: false }
     ],
     erDiagram: [
         { type: 'IsStrong', pattern: '--' },

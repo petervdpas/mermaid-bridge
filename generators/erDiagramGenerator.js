@@ -8,36 +8,34 @@ const {
 } = require('../umlFactory');
 
 // Function to create relationships between ERD entities
-function createERDRelationship(relation, tailView, headView, diagram) {
+function createERDRelationship(relation, fromView, toView, diagram) {
 
     console.log(relation);
-    
-    if (!diagram || !tailView || !headView) {
+
+    if (!diagram || !fromView || !toView) {
         app.toast.error("ERDiagram, Parent- or child-entity is missing.");
         return;
     }
 
-    /*
     const options = {
-        id: "ERDAssociation",  // General association for now
+        id: "ERDRelationship",  // General association for now
         parent: diagram._parent,
         diagram: diagram,
-        tailView: tailView,
-        headView: headView,
-        tailModel: tailView.model,
-        headModel: headView.model,
+        tailView: fromView,
+        headView: toView,
+        tailModel: fromView.model,
+        headModel: toView.model,
         modelInitializer: function (elem) {
-            elem.name = relation.label || ''; // Set relationship label if exists
-            elem.stereotype = relation.weak ? 'weak' : '';  // Apply "weak" stereotype if relevant
+            elem.name = relation.label || ''; // Set the relationship label
+            elem.identifying = !relation.weak; // Strong relationships are identifying
         }
     };
 
     const relationView = app.factory.createModelAndView(options);
 
     // Assign multiplicity based on the fromType and toType
-    relationView.model.end1.multiplicity = getMultiplicity(relation.fromType);
-    relationView.model.end2.multiplicity = getMultiplicity(relation.toType);
-    */
+    relationView.model.end1.cardinality = getMultiplicity(relation.fromType);
+    relationView.model.end2.cardinality = getMultiplicity(relation.toType);
 }
 
 // Helper function to translate types (like `ZeroOrOne`) into multiplicity values
@@ -93,9 +91,9 @@ function generateERDiagram(project, parsedDiagram) {
 
     // Process relationships between entities
     parsedDiagram.relationships.forEach(relation => {
-        const tailView = entityViewMap[relation.to];
-        const headView = entityViewMap[relation.from];
-        createERDRelationship(relation, tailView, headView, erDiagram);
+        const fromView = entityViewMap[relation.from];
+        const toView = entityViewMap[relation.to];
+        createERDRelationship(relation, fromView, toView, erDiagram);
     });
 }
 

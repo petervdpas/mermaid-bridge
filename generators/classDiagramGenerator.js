@@ -8,9 +8,9 @@ const {
 } = require('../umlFactory');
 
 // Function to create relationships between UML elements
-function createClassRelationship(relation, tailView, headView, diagram) {
+function createClassRelationship(relation, fromView, toView, diagram) {
 
-    if (!diagram || !tailView || !headView) {
+    if (!diagram || !fromView || !toView) {
         app.toast.error("ClassDiagram, Parent- or child-class is missing.");
         return;
     }
@@ -36,12 +36,12 @@ function createClassRelationship(relation, tailView, headView, diagram) {
         id: elemType,
         parent: diagram._parent,
         diagram: diagram,
-        tailView: tailView,
-        headView: headView,
-        tailModel: tailView.model,
-        headModel: headView.model,
+        tailView: fromView,
+        headView: toView,
+        tailModel: fromView.model,
+        headModel: toView.model,
         modelInitializer: function (elem) {
-            elem.name = relation.label || '';
+            elem.name = relation.label || ''; // Set the relationship label
         }
     };
 
@@ -49,17 +49,17 @@ function createClassRelationship(relation, tailView, headView, diagram) {
 
     switch (relation.type) {
         case 'directedAssociation':
-            relationView.model.end1.navigable = "navigable";
+            relationView.model.end2.navigable = "navigable";
             break;
         case 'bidirectionalAssociation':
             relationView.model.end1.navigable = "navigable";
             relationView.model.end2.navigable = "navigable";
             break;
         case 'aggregation':
-            relationView.model.end2.aggregation = "shared";
+            relationView.model.end1.aggregation = "shared";
             break;
         case 'composition':
-            relationView.model.end2.aggregation = "composite";
+            relationView.model.end1.aggregation = "composite";
             break;
     }
 }
@@ -105,9 +105,9 @@ function generateClassDiagram(project, parsedDiagram) {
 
     // Process relationships between classes
     parsedDiagram.relationships.forEach(rel => {
-        const tailView = classViewMap[rel.to];
-        const headView = classViewMap[rel.from];
-        createClassRelationship(rel, tailView, headView, classDiagram);
+        const fromView = classViewMap[rel.from];
+        const toView = classViewMap[rel.to];
+        createClassRelationship(rel, fromView, toView, classDiagram);
     });
 }
 
