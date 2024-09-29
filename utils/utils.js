@@ -1,4 +1,4 @@
-// utils.js
+// utils/utils.js
 
 const relationshipTypes = {
     classDiagram: [
