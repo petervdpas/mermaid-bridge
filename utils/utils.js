@@ -190,12 +190,10 @@ function parseERDiagramRelationship(line, relationships) {
     }
 }
 
-module.exports = { 
+module.exports = {
+    relationshipTypes,
     translateType, 
     translateVisibility, 
     shouldIgnoreLine,
-    isRelationshipLine, 
-    parseRelationship, 
-    parseClassDiagramRelationship,
-    parseERDiagramRelationship
+    isRelationshipLine
 };

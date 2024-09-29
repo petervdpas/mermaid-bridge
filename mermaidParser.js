@@ -2,7 +2,6 @@
 
 const { parseClassDiagram } = require('./parsers/classDiagramParser');
 const { parseERDiagram } = require('./parsers/erDiagramParser');
-const { parseFlowchart } = require('./parsers/flowchartParser');
 
 // Helper function to identify the start or end of a metadata block
 function isMetadataBlockStartOrEnd(line) {
@@ -37,9 +36,8 @@ function skipMetadataAndCommentLines(lines) {
 // Helper function to determine the type of diagram
 function determineDiagramType(lines) {
     const diagramTypes = {
-        erDiagram: /^erDiagram/,
         classDiagram: /^classDiagram/,
-        flowchart: /^flowchart/
+        erDiagram: /^erDiagram/
     };
 
     // Skip metadata block lines and empty lines
@@ -76,9 +74,6 @@ function parseMermaidToJSON(mermaidCode) {
             break;
         case 'erDiagram':
             parseERDiagram(filteredLines, jsonResult);
-            break;
-        case 'flowchart':
-            parseFlowchart(filteredLines, jsonResult);
             break;
         default:
             throw new Error("Unsupported diagram type.");

@@ -1,10 +1,7 @@
 // parsers/erDiagramParser.js
 
-const { 
-    shouldIgnoreLine, 
-    isRelationshipLine, 
-    parseERDiagramRelationship 
-} = require('../utils/utils');
+const { shouldIgnoreLine, isRelationshipLine } = require('../utils/utils');
+const { parseERDiagramRelationship } = require('../parsers/relationshipParsers');
 
 // Helper function to parse field properties like "length: 100, nullable: true"
 function parseFieldProperties(fieldString) {
