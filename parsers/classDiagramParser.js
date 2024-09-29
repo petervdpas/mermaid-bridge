@@ -1,7 +1,26 @@
 // parsers/classDiagramParser.js
 
-const { translateVisibility, shouldIgnoreLine, isRelationshipLine } = require('../utils/utils');
-const { parseClassDiagramRelationship } = require('../parsers/relationshipParsers');
+const { relationshipTypes, translateVisibility, shouldIgnoreLine, isRelationshipLine } = require('../utils/utils');
+
+// Function to parse class diagram relationships
+function parseClassDiagramRelationship(line, relationships) {
+    const relationship = relationshipTypes['classDiagram'].find(rel => line.includes(rel.pattern));
+    if (relationship) {
+        const [fromToPart, labelPart] = line.split(':').map(part => part.trim());
+        const [from, to] = fromToPart.split(relationship.pattern).map(part => part.trim());
+        const label = labelPart || null;
+
+        // Push the parsed relationship into the array
+        relationships.push({
+            from: from,
+            to: to,
+            type: relationship.type,
+            label: label
+        });
+    } else {
+        console.warn(`Could not parse class diagram relationship: ${line}`);
+    }
+}
 
 // Parsing logic for class diagrams
 function parseClassDiagram(lines, jsonResult) {
