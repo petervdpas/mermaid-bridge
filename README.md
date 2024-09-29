@@ -42,8 +42,6 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 2. Paste or upload your Mermaid class diagram code.
 3. The diagram will be converted into a StarUML class diagram and added to your project.
 
-![Mermaid Diagram after moving stuff around](images/MermaidDiagram.png)
-
 ### Exporting to Mermaid
 
 1. Go to `Tools > Mermaid Bridge > Export to Mermaid`.
@@ -56,46 +54,6 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 
 **The following is an example of a CLASS diagram in Mermaid syntax:**
 
-```plaintext
----
-title: Cats and Dogs
-author: Peter van de Pas
----
-classDiagram
-   class Animal {
-      +String name
-      +int age
-      +void eat()
-      -void sleep()
-   }
-   class Dog {
-      +String breed
-      +void bark()
-      +void fetch()
-   }
-   class Cat {
-      +String furColor
-      +void meow()
-      -void scratch()
-   }
-   class House {
-      +String address
-      +void openDoor()
-   }
-   class Room {
-      +String name
-      +void enter()
-   }
-   Dog --|> Animal
-   Cat --|> Animal
-   Dog <--> Cat : friendship
-   Dog --> Cat : chases
-   Cat --> Dog : scratches
-   Dog *-- House : lives in
-   Cat *-- House : lives in
-   House o-- Room : contains
-```
-
 ```mermaid
 ---
 title: Cats and Dogs
@@ -135,38 +93,13 @@ classDiagram
    Cat *-- House : lives in
    House o-- Room : contains
 ```
+
+![Mermaid Class Diagram after moving stuff around](images/Mermaid-ClassDiagram.png)
+
+> Mermaid Class Diagram... after moving stuff around
 
 **The following is an example of a ER diagram in Mermaid syntax:**
 
-```plaintext
----
-title: Customer Orders
-author: Peter van de Pas
----
-erDiagram
-    CUSTOMER {
-        varchar name "length: 100, nullable: true"
-        int age "nullable: true"
-    }
-    ORDER {
-        varchar orderNumber "length: 20, nullable: true"
-        date orderDate "nullable: true"
-    }
-    LINE-ITEM {
-        int quantity "nullable: true"
-        decimal price "nullable: true"
-    }
-    DELIVERY-ADDRESS {
-        varchar street "length: 100, nullable: true"
-        varchar city "length: 50, nullable: true"
-        varchar postalCode "length: 10, nullable: true"
-    }
-
-    CUSTOMER ||--o{ ORDER : places
-    ORDER ||--|{ LINE-ITEM : contains
-    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
-```
-
 ```mermaid
 ---
 title: Customer Orders
@@ -195,6 +128,10 @@ erDiagram
     ORDER ||--|{ LINE-ITEM : contains
     CUSTOMER }|..|{ DELIVERY-ADDRESS : uses
 ```
+
+![Mermaid ER Diagram after moving stuff around](images/Mermaid-ERDiagram.png)
+
+> Mermaid ER Diagram... after moving stuff around
 
 ## Contributing
 
