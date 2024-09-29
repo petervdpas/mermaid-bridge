@@ -55,7 +55,6 @@ function addClassElement(elemType, parent, field, inElements) {
 function addERDElement(elemType, parent, field, inElements) {
 
     var properties = inElements.properties;
-    console.log(properties);
 
     app.factory.createModel({
         id: elemType,
