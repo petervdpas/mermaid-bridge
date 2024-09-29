@@ -8,7 +8,7 @@ function parseClassDiagram(lines, jsonResult) {
 
     lines.forEach((line, index) => {
         // Use the utility to check if the line should be ignored
-        if (shouldIgnoreLine(line, index)) {
+        if (shouldIgnoreLine(line, index, 'classDiagram')) {
             return; 
         }
 
