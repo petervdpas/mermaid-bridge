@@ -1,30 +1,53 @@
 // classDiagramParser.js
 
-const { isRelationshipLine, parseRelationship, translateVisibility } = require('../utils/utils');
+const { isRelationshipLine, parseRelationship, translateVisibility, shouldIgnoreLine } = require('../utils/utils');
 
 // Parsing logic for class diagrams
 function parseClassDiagram(lines, jsonResult) {
     let currentElement = null;
 
-    lines.forEach(line => {
+    lines.forEach((line, index) => {
+        // Use the utility to check if the line should be ignored
+        if (shouldIgnoreLine(line, index)) {
+            return; 
+        }
+
+        // Start parsing class definitions
         if (line.startsWith('class ')) {
-            if (currentElement) jsonResult.classes.push(currentElement);
-            currentElement = { name: line.split(' ')[1], attributes: [], methods: [] };
-        } else if (['+', '-', '#'].some(symbol => line.startsWith(symbol))) {
+            // Push the previous class before starting a new one
+            if (currentElement) {
+                jsonResult.classes.push(currentElement);
+            }
+            currentElement = { name: line.split(' ')[1], attributes: [], methods: [] };  // Initialize new class
+        }
+        // Parse attributes or methods (handling parentheses carefully)
+        else if (['+', '-', '#'].some(symbol => line.startsWith(symbol))) {
             const parts = line.split(/[\s()]+/).filter(Boolean);
             const visibility = translateVisibility(parts[0][0]);
             const name = parts[1];
-            const type = parts[0].substring(1);
+            const type = parts[0].substring(1);  // Everything after the visibility symbol
 
+            // Check if the line contains parentheses (indicating a method)
             if (line.includes('()')) {
-                const parameters = line.match(/\((.*?)\)/)[1].split(',').map(param => param.trim());
-                currentElement.methods.push({ visibility, name, returnType: type, parameters });
+                // Handle method parsing
+                const parameters = line.match(/\((.*?)\)/);  // Check if there are parameters
+                currentElement.methods.push({
+                    visibility: visibility,
+                    name: name,
+                    returnType: type,
+                    parameters: parameters ? parameters[1].split(',').map(param => param.trim()) : []
+                });
             } else {
+                // Handle attribute parsing
                 currentElement.attributes.push({ visibility, name, type });
             }
-        } else if (isRelationshipLine(line, 'classDiagram')) {
+        }
+        // Handle relationships
+        else if (isRelationshipLine(line, 'classDiagram')) {
             parseRelationship(line, jsonResult.relationships, 'classDiagram');
-        } else {
+        } 
+        // Unrecognized lines (could be handled as warnings if necessary)
+        else {
             console.warn(`Unrecognized line in classDiagram: ${line}`);
         }
     });

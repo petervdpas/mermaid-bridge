@@ -63,9 +63,14 @@ const relationshipTypes = {
         { type: 'association', pattern: '--' }
     ],
     erDiagram: [
-        { type: 'places', pattern: '||--o{' },
-        { type: 'contains', pattern: '||--|{' },
-        { type: 'uses', pattern: '}|..|{' }
+        { type: 'To', pattern: '--' },
+        { type: 'ZeroOrOne', pattern: '|o' },
+        { type: 'ZeroOrOne', pattern: 'o|' },
+        { type: 'ExactlyOne', pattern: '||' },
+        { type: 'ZeroOrMore', pattern: '}o' },
+        { type: 'ZeroOrMore', pattern: 'o{' },
+        { type: 'OneoOrMore', pattern: '}|' },
+        { type: 'OneoOrMore', pattern: '|{' },
     ]
 };
 
@@ -99,4 +104,12 @@ function parseRelationship(line, relationships, diagramType) {
     }
 }
 
-module.exports = { translateType, translateVisibility, isRelationshipLine, parseRelationship };
+// Utility function to determine if a line should be ignored
+function shouldIgnoreLine(line, index) {
+    const trimmedLine = line.trim();
+
+    // Ignore the diagram declaration line and closing curly braces
+    return (index === 0 && trimmedLine === 'classDiagram') || trimmedLine === '}';
+}
+
+module.exports = { translateType, translateVisibility, isRelationshipLine, parseRelationship, shouldIgnoreLine };

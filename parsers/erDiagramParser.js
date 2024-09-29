@@ -25,9 +25,9 @@ function parseERDiagram(lines, jsonResult) {
     let currentElement = null;
 
     lines.forEach((line, index) => {
-        // Ignore the first line if it's the 'erDiagram' declaration
+        // Ignore the diagram declaration line
         if (index === 0 && line.trim() === 'erDiagram') {
-            return; // Skip the first line
+            return; 
         }
 
         // First, check if the line is a relationship before checking for entities
