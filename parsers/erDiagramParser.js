@@ -1,3 +1,5 @@
+// parsers/erDiagramParser.js
+
 const { 
     shouldIgnoreLine, 
     isRelationshipLine, 

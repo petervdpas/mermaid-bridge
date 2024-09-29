@@ -1,4 +1,4 @@
-// classDiagramParser.js
+// parsers/classDiagramParser.js
 
 const { 
     translateVisibility, 

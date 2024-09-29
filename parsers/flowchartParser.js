@@ -1,4 +1,4 @@
-// flowchartParser.js
+// parsers/flowchartParser.js
 
 // Parsing logic for flowcharts
 function parseFlowchart(lines, jsonResult) {
