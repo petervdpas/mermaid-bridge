@@ -1,5 +1,27 @@
 // utils.js
 
+const relationshipTypes = {
+    classDiagram: [
+        { type: 'inheritance', pattern: '<|--' },
+        { type: 'aggregation', pattern: 'o--' },
+        { type: 'composition', pattern: '*--' },
+        { type: 'bidirectionalAssociation', pattern: '<-->' },
+        { type: 'directedAssociation', pattern: '-->' },
+        { type: 'association', pattern: '--' }
+    ],
+    erDiagram: [
+        { type: 'Connector', pattern: '--' },
+        { type: 'WeakConnector', pattern: '..' },
+        { type: 'ZeroOrOne', pattern: '|o' },
+        { type: 'ZeroOrOne', pattern: 'o|' },
+        { type: 'ExactlyOne', pattern: '||' },
+        { type: 'ZeroOrMany', pattern: '}o' },
+        { type: 'ZeroOrMany', pattern: 'o{' },
+        { type: 'OneOrMany', pattern: '}|' },
+        { type: 'OneOrMany', pattern: '|{' }
+    ]
+};
+
 // Function to translate SQL data types into StarUML/ERD types
 function translateType(sqlType) {
     switch (sqlType.toLowerCase()) {
@@ -53,27 +75,6 @@ function translateType(sqlType) {
     }
 }
 
-const relationshipTypes = {
-    classDiagram: [
-        { type: 'inheritance', pattern: '<|--' },
-        { type: 'aggregation', pattern: 'o--' },
-        { type: 'composition', pattern: '*--' },
-        { type: 'bidirectionalAssociation', pattern: '<-->' },
-        { type: 'directedAssociation', pattern: '-->' },
-        { type: 'association', pattern: '--' }
-    ],
-    erDiagram: [
-        { type: 'Connector', pattern: '--' },
-        { type: 'ZeroOrOne', pattern: '|o' },
-        { type: 'ZeroOrOne', pattern: 'o|' },
-        { type: 'ExactlyOne', pattern: '||' },
-        { type: 'ZeroOrMore', pattern: '}o' },
-        { type: 'ZeroOrMore', pattern: 'o{' },
-        { type: 'OneoOrMore', pattern: '}|' },
-        { type: 'OneoOrMore', pattern: '|{' },
-    ]
-};
-
 // Translate visibility symbols to UML visibility keywords
 function translateVisibility(symbol) {
     const visibilityMap = {
@@ -83,6 +84,14 @@ function translateVisibility(symbol) {
         '~': 'package'
     };
     return visibilityMap[symbol] || 'package';
+}
+
+// Utility function to determine if a line should be ignored
+function shouldIgnoreLine(line, index, diagramType) {
+    const trimmedLine = line.trim();
+
+    // Ignore the diagram declaration line and closing curly braces
+    return (index === 0 && trimmedLine === diagramType) || trimmedLine === '}';
 }
 
 // Check if a line contains a relationship pattern
@@ -104,12 +113,91 @@ function parseRelationship(line, relationships, diagramType) {
     }
 }
 
-// Utility function to determine if a line should be ignored
-function shouldIgnoreLine(line, index, diagramType) {
-    const trimmedLine = line.trim();
+// Function to parse class diagram relationships
+function parseClassDiagramRelationship(line, relationships) {
+    const relationship = relationshipTypes['classDiagram'].find(rel => line.includes(rel.pattern));
+    if (relationship) {
+        const [fromToPart, labelPart] = line.split(':').map(part => part.trim());
+        const [from, to] = fromToPart.split(relationship.pattern).map(part => part.trim());
+        const label = labelPart || null;
 
-    // Ignore the diagram declaration line and closing curly braces
-    return (index === 0 && trimmedLine === diagramType) || trimmedLine === '}';
+        // Push the parsed relationship into the array
+        relationships.push({
+            from: from,
+            to: to,
+            type: relationship.type,
+            label: label
+        });
+    } else {
+        console.warn(`Could not parse class diagram relationship: ${line}`);
+    }
 }
 
-module.exports = { translateType, translateVisibility, isRelationshipLine, parseRelationship, shouldIgnoreLine };
+// Function to parse ER diagram relationships
+function parseERDiagramRelationship(line, relationships) {
+    let leftType = null;
+    let rightType = null;
+    let connector = null;
+
+    // First, find the connector (either solid or weak)
+    const connectorPattern = relationshipTypes['erDiagram'].find(rel => 
+        line.includes(rel.pattern) && (rel.type === 'Connector' || rel.type === 'WeakConnector')
+    );
+    if (connectorPattern) {
+        connector = connectorPattern.pattern;
+    }
+
+    if (!connector) {
+        console.warn(`No connector found in line: ${line}`);
+        return;
+    }
+
+    // Extract the left and right side of the relationship
+    const [fromSide, toSide] = line.split(connector).map(part => part.trim());
+
+    // Find the left pattern (before the connector)
+    const leftPattern = relationshipTypes['erDiagram'].find(rel => fromSide.endsWith(rel.pattern));
+    if (leftPattern) {
+        leftType = leftPattern.type;
+    }
+
+    // Find the right pattern (after the connector)
+    const rightPattern = relationshipTypes['erDiagram'].find(rel => toSide.startsWith(rel.pattern));
+    if (rightPattern) {
+        rightType = rightPattern.type;
+    }
+
+    // Remove patterns from `from` and `to` entities
+    const from = fromSide.replace(leftPattern ? leftPattern.pattern : '', '').trim();
+    const to = toSide.replace(rightPattern ? rightPattern.pattern : '', '').trim();
+
+    if (leftType && rightType && from && to) {
+        const relationshipType = `${leftType}To${rightType}`;
+        const [_, labelPart] = line.split(':').map(part => part.trim());
+        const label = labelPart || null;
+
+        // Determine if it's a weak relationship based on the connector
+        const isWeak = connector === '..';
+
+        // Push the relationship into the array
+        relationships.push({
+            from: from,
+            to: to,
+            type: relationshipType,
+            label: label,
+            weak: isWeak  // Add weak flag for dashed lines
+        });
+    } else {
+        console.warn(`Could not parse ER diagram relationship: ${line}`);
+    }
+}
+
+module.exports = { 
+    translateType, 
+    translateVisibility, 
+    shouldIgnoreLine,
+    isRelationshipLine, 
+    parseRelationship, 
+    parseClassDiagramRelationship,
+    parseERDiagramRelationship
+};

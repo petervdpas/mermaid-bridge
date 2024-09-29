@@ -1,4 +1,8 @@
-const { isRelationshipLine, parseRelationship, shouldIgnoreLine } = require('../utils/utils');
+const { 
+    shouldIgnoreLine, 
+    isRelationshipLine, 
+    parseERDiagramRelationship 
+} = require('../utils/utils');
 
 // Helper function to parse field properties like "length: 100, nullable: true"
 function parseFieldProperties(fieldString) {
@@ -30,7 +34,7 @@ function parseERDiagram(lines, jsonResult) {
 
         // Check if the line is a relationship
         if (isRelationshipLine(line, 'erDiagram')) {
-            parseRelationship(line, jsonResult.relationships, 'erDiagram');
+            parseERDiagramRelationship(line, jsonResult.relationships, 'erDiagram');
         }
         // Start of a new entity block
         else if (line.includes('{')) {

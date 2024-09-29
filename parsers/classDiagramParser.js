@@ -1,6 +1,11 @@
 // classDiagramParser.js
 
-const { isRelationshipLine, parseRelationship, translateVisibility, shouldIgnoreLine } = require('../utils/utils');
+const { 
+    translateVisibility, 
+    shouldIgnoreLine, 
+    isRelationshipLine, 
+    parseClassDiagramRelationship, 
+} = require('../utils/utils');
 
 // Parsing logic for class diagrams
 function parseClassDiagram(lines, jsonResult) {
@@ -44,7 +49,7 @@ function parseClassDiagram(lines, jsonResult) {
         }
         // Handle relationships
         else if (isRelationshipLine(line, 'classDiagram')) {
-            parseRelationship(line, jsonResult.relationships, 'classDiagram');
+            parseClassDiagramRelationship(line, jsonResult.relationships, 'classDiagram');
         } 
         // Unrecognized lines (could be handled as warnings if necessary)
         else {
