@@ -1,29 +1,10 @@
-// umlProcess.js
+// uml-processors/classDiagramProcessor.js
 
 const {
     mapClassVisibilityToSymbol,
     isClassRelationNavigable
-} = require('./utils/utils');
+} = require('../utils/utils');
 
-function convertToMermaid(model) {
-
-    let mermaidCode = '';
-
-    switch (true) {
-        case model instanceof type.UMLModel:
-            mermaidCode += appendClassDiagamToMermaid(model);
-            break;
-
-        case model instanceof type.ERDDataModel:
-            mermaidCode += 'erDiagram\n';
-            break;
-
-        default:
-            return '';  // Return an empty string if the model type is unknown
-    }
-
-    return mermaidCode;
-}
 
 // Function to append classes/entities and relationships to Mermaid code
 function appendClassDiagamToMermaid(model) {
@@ -135,4 +116,4 @@ function addRelationshipToBuffer(from, relationSymbol, to, label, relationshipBu
     relationshipBuffer.push(`${from} ${relationSymbol} ${to}${relationLabel}`);
 }
 
-module.exports = { convertToMermaid };
+module.exports = { appendClassDiagamToMermaid };

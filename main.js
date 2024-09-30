@@ -1,7 +1,7 @@
 // main.js
 
 const { parseMermaidToJSON } = require('./mermaidParser');
-const { convertToMermaid } = require('./umlProcess');
+const { convertToMermaid } = require('./umlProcessor');
 const { generateUML } = require('./umlGenerator');
 
 function aboutMermaid() {
