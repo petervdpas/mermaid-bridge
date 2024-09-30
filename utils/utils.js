@@ -27,7 +27,7 @@ const relationshipTypes = {
 };
 
 // Function to translate SQL data types into StarUML/ERD types
-function translateType(sqlType) {
+function translateSQLType(sqlType) {
     switch (sqlType.toLowerCase()) {
         case 'int':
         case 'integer':
@@ -79,8 +79,8 @@ function translateType(sqlType) {
     }
 }
 
-// Translate visibility symbols to UML visibility keywords
-function translateVisibility(symbol) {
+// Translate visibility symbols (e.g., +, -, #) to UML visibility keywords (e.g., public, private)
+function mapSymbolToClassVisibility(symbol) {
     const visibilityMap = {
         '+': 'public',
         '-': 'private',
@@ -89,6 +89,14 @@ function translateVisibility(symbol) {
     };
     return visibilityMap[symbol] || 'package';
 }
+
+// Helper function to translate UML visibility keywords (e.g., public, private) back to symbols (e.g., +, -, #)
+const mapClassVisibilityToSymbol = visibility => ({
+    'public': '+',
+    'private': '-',
+    'protected': '#',
+    'package': '~'
+}[visibility] || '~');
 
 // Utility function to determine if a line should be ignored
 function shouldIgnoreLine(line, index, diagramType) {
@@ -104,10 +112,17 @@ function isRelationshipLine(line, diagramType) {
     return patterns.some(pattern => line.includes(pattern));
 }
 
+// Helper function for navigable check of a class-relation
+function isClassRelationNavigable(navigable) {
+    return navigable === "navigable";
+}
+
 module.exports = {
     relationshipTypes,
-    translateType, 
-    translateVisibility, 
+    translateSQLType, 
+    mapSymbolToClassVisibility, 
+    mapClassVisibilityToSymbol,
     shouldIgnoreLine,
-    isRelationshipLine
+    isRelationshipLine,
+    isClassRelationNavigable
 };

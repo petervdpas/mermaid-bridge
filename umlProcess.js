@@ -1,39 +1,22 @@
 // umlProcess.js
 
+const {
+    mapClassVisibilityToSymbol,
+    isClassRelationNavigable
+} = require('./utils/utils');
+
 function convertToMermaid(model) {
     let mermaidCode = 'classDiagram\n';
-    const classMap = new Map();
-    const relationshipBuffer = [];
 
-    // Process classes and attributes/methods
-    model.ownedElements.forEach(element => {
-        if (element instanceof type.UMLClass) {
-            let classDef = `  class ${element.name} {\n`;
-
-            // Handle attributes
-            element.attributes.forEach(attr => {
-                classDef += `    ${translateVisibility(attr.visibility)} ${attr.type} ${attr.name}\n`;
-            });
-
-            // Handle methods
-            element.operations.forEach(op => {
-                classDef += `    ${translateVisibility(op.visibility)} void ${op.name}()\n`;
-            });
-
-            classDef += `  }\n`;
-            classMap.set(element._id, classDef);
-        }
-
-        // Collect relationships
-        processRelationshipRecursive(element, relationshipBuffer);
-    });
+    const classMap = generateClassDefinitions(model);
+    const relationshipBuffer = generateRelationships(model);
 
     // Append classes to Mermaid code
     classMap.forEach(classDef => {
         mermaidCode += classDef;
     });
 
-    // Append relationships at the bottom
+    // Append relationships to Mermaid code
     relationshipBuffer.forEach(relation => {
         mermaidCode += `${relation}\n`;
     });
@@ -41,28 +24,49 @@ function convertToMermaid(model) {
     return mermaidCode;
 }
 
-// Separate function to process relationships recursively
-function processRelationshipRecursive(element, relationshipBuffer) {
-    if (element instanceof type.UMLAssociation || element instanceof type.UMLGeneralization) {
-        let relationSymbol = '--';
-        let from, to;
+// Function to generate class definitions
+function generateClassDefinitions(model) {
+    const classMap = new Map();
 
-        if (element instanceof type.UMLGeneralization) {
-            ({ source: { name: from }, target: { name: to } } = element);
-            relationSymbol = '<|--';  // inheritance
-        } else {
-            ({ end1: { reference: { name: to }, aggregation }, end2: { reference: { name: from }, navigable } } = element);
+    model.ownedElements.forEach(element => {
+        if (element instanceof type.UMLClass) {
+            let classDef = `  class ${element.name} {\n`;
 
-            // Determine relationship type
-            relationSymbol = (element.end2.aggregation === 'composite') ? '*--' :
-                             (element.end2.aggregation === 'shared') ? 'o--' :
-                             (checkNavigable(element.end1.navigable) && checkNavigable(element.end2.navigable)) ? '<-->' :
-                             (checkNavigable(element.end1.navigable)) ? '-->' : '--';
+            // Handle attributes
+            element.attributes.forEach(attr => {
+                classDef += `    ${mapClassVisibilityToSymbol(attr.visibility)} ${attr.type} ${attr.name}\n`;
+            });
+
+            // Handle methods
+            element.operations.forEach(op => {
+                classDef += `    ${mapClassVisibilityToSymbol(op.visibility)} void ${op.name}()\n`;
+            });
+
+            classDef += `  }\n`;
+            classMap.set(element._id, classDef);
         }
+    });
 
-        // Add relationship label if present
-        const relationLabel = element.name?.trim() ? ` : ${element.name}` : '';
-        relationshipBuffer.push(`${from} ${relationSymbol} ${to}${relationLabel}`);
+    return classMap;
+}
+
+// Function to generate relationships
+function generateRelationships(model) {
+    const relationshipBuffer = [];
+
+    model.ownedElements.forEach(element => {
+        processRelationshipRecursive(element, relationshipBuffer);
+    });
+
+    return relationshipBuffer;
+}
+
+// Process relationships recursively (associations, generalizations, etc.)
+function processRelationshipRecursive(element, relationshipBuffer) {
+    if (element instanceof type.UMLAssociation) {
+        processAssociation(element, relationshipBuffer);
+    } else if (element instanceof type.UMLGeneralization) {
+        processGeneralization(element, relationshipBuffer);
     }
 
     // Recursively process owned elements
@@ -71,15 +75,43 @@ function processRelationshipRecursive(element, relationshipBuffer) {
     });
 }
 
-// Helper function for navigable check
-const checkNavigable = navigable => navigable === "navigable";
+// Handle generalization (inheritance) relationships
+function processGeneralization(element, relationshipBuffer) {
+    const { source: { name: from }, target: { name: to } } = element;
+    const relationSymbol = '<|--';  // Inheritance
+    addRelationshipToBuffer(from, relationSymbol, to, element.name, relationshipBuffer);
+}
 
-// Helper function to translate visibility
-const translateVisibility = visibility => ({
-    'public': '+',
-    'private': '-',
-    'protected': '#',
-    '~': '~'
-}[visibility] || '~');
+// Handle associations (including aggregation and composition)
+function processAssociation(element, relationshipBuffer) {
+    const { end1, end2 } = element;
+    const from = end2.reference.name;
+    const to = end1.reference.name;
+
+    // Determine the relationship symbol based on aggregation and navigability
+    const relationSymbol = determineAssociationSymbol(end1, end2);
+    addRelationshipToBuffer(from, relationSymbol, to, element.name, relationshipBuffer);
+}
+
+// Determine the relationship symbol for associations
+function determineAssociationSymbol(end1, end2) {
+    const end1Aggregation = (end1.aggregation === 'composite') ? '--*' :
+                            (end1.aggregation === 'shared') ? '--o' : '--';
+
+    const end2Aggregation = (end2.aggregation === 'composite') ? '*--' :
+                            (end2.aggregation === 'shared') ? 'o--' : '--';
+
+    return (isClassRelationNavigable(end1.navigable) && isClassRelationNavigable(end2.navigable)) ? '<-->' :
+           isClassRelationNavigable(end1.navigable) ? '-->' :
+           isClassRelationNavigable(end2.navigable) ? '<--' :
+           end1Aggregation !== '--' ? end1Aggregation :
+           end2Aggregation !== '--' ? end2Aggregation : '--';
+}
+
+// Helper to add a relationship to the buffer with optional label
+function addRelationshipToBuffer(from, relationSymbol, to, label, relationshipBuffer) {
+    const relationLabel = label?.trim() ? ` : ${label}` : '';
+    relationshipBuffer.push(`${from} ${relationSymbol} ${to}${relationLabel}`);
+}
 
 module.exports = { convertToMermaid };

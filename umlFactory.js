@@ -1,6 +1,6 @@
 // umlFactory.js
 
-const { translateType } = require('./utils/utils');
+const { translateSQLType } = require('./utils/utils');
 
 // Generic function to create a diagram
 function createDiagram({ idType, parent, name, defaultDiagram = false }) {
@@ -62,7 +62,7 @@ function addERDElement(elemType, parent, field, inElements) {
         field: field,
         modelInitializer: function (elem) {
             elem.name = inElements.name;
-            elem.type = translateType(inElements.type);
+            elem.type = translateSQLType(inElements.type);
             elem.length = properties.length || '';
             elem.nullable = properties.nullable || false;
         }

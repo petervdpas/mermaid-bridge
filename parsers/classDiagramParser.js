@@ -1,6 +1,11 @@
 // parsers/classDiagramParser.js
 
-const { relationshipTypes, translateVisibility, shouldIgnoreLine, isRelationshipLine } = require('../utils/utils');
+const {
+    relationshipTypes,
+    mapSymbolToClassVisibility,
+    shouldIgnoreLine,
+    isRelationshipLine
+} = require('../utils/utils');
 
 // Function to parse class diagram relationships
 function parseClassDiagramRelationship(line, relationships) {
@@ -47,7 +52,7 @@ function parseClassDiagram(lines, jsonResult) {
         // Parse attributes or methods (handling parentheses carefully)
         else if (['+', '-', '#'].some(symbol => line.startsWith(symbol))) {
             const parts = line.split(/[\s()]+/).filter(Boolean);
-            const visibility = translateVisibility(parts[0][0]);
+            const visibility = mapSymbolToClassVisibility(parts[0][0]);
             const name = parts[1];
             const type = parts[0].substring(1);  // Everything after the visibility symbol
 
