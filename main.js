@@ -1,6 +1,6 @@
 // main.js
 
-const { parseMermaidToJSON } = require('./mermaidParser');
+const { convertToUML } = require('./mermaidParser');
 const { convertToMermaid } = require('./umlProcessor');
 const { generateUML } = require('./umlGenerator');
 
@@ -20,7 +20,7 @@ function importMermaid() {
 
                 if (mermaidCode) {
                     try {
-                        var parsedDiagram = parseMermaidToJSON(mermaidCode);
+                        var parsedDiagram = convertToUML(mermaidCode);
                         console.log("Parsed Mermaid-diagram:", parsedDiagram);
                         generateUML(parsedDiagram);
                     } catch (err) {

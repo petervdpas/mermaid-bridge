@@ -2,6 +2,7 @@
 
 const { parseClassDiagram } = require('./parsers/classDiagramParser');
 const { parseERDiagram } = require('./parsers/erDiagramParser');
+const { parseSequenceDiagram } = require('./parsers/sequenceDiagramParser');
 
 // Helper function to identify the start or end of a metadata block
 function isMetadataBlockStartOrEnd(line) {
@@ -37,7 +38,8 @@ function skipMetadataAndCommentLines(lines) {
 function determineDiagramType(lines) {
     const diagramTypes = {
         classDiagram: /^classDiagram/,
-        erDiagram: /^erDiagram/
+        erDiagram: /^erDiagram/,
+        sequenceDiagram: /^sequenceDiagram/
     };
 
     // Skip metadata block lines and empty lines
@@ -56,7 +58,7 @@ function determineDiagramType(lines) {
 }
 
 // Main function to parse Mermaid code to JSON structure
-function parseMermaidToJSON(mermaidCode) {
+function convertToUML(mermaidCode) {
     const lines = mermaidCode.split('\n').map(line => line.trim());
 
     // Filter out metadata and comment lines
@@ -76,6 +78,9 @@ function parseMermaidToJSON(mermaidCode) {
         case 'erDiagram':
             parseERDiagram(filteredLines, jsonResult);
             break;
+        case 'sequenceDiagram':
+            parseSequenceDiagram(filteredLines, jsonResult);
+            break;
         default:
             throw new Error("Unsupported diagram type.");
     }
@@ -83,4 +88,4 @@ function parseMermaidToJSON(mermaidCode) {
     return jsonResult;
 }
 
-module.exports = { parseMermaidToJSON };
+module.exports = { convertToUML };

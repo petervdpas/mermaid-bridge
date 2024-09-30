@@ -22,15 +22,12 @@ function generateUML(parsedDiagram) {
         case 'classDiagram':
             generateClassDiagram(project, parsedDiagram);
             break;
-        
         case 'erDiagram':
             generateERDiagram(project, parsedDiagram);
             break;
-
         case 'sequenceDiagram':
             generateSequenceDiagram(project, parsedDiagram);
             break;
-
         default:
             app.toast.error(`Unsupported diagram type: ${parsedDiagram.type}`);
             return;
