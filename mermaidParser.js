@@ -1,61 +1,9 @@
 // mermaidParser.js
 
+const { skipMetadataAndCommentLines, determineDiagramType } = require('./utils/utils');
 const { parseClassDiagram } = require('./parsers/classDiagramParser');
 const { parseERDiagram } = require('./parsers/erDiagramParser');
 const { parseSequenceDiagram } = require('./parsers/sequenceDiagramParser');
-
-// Helper function to identify the start or end of a metadata block
-function isMetadataBlockStartOrEnd(line) {
-    return line === '---';
-}
-
-// Helper function to identify single-line comments
-function isCommentLine(line) {
-    return line.startsWith('%%');
-}
-
-// Helper function to skip metadata block and comment lines
-function skipMetadataAndCommentLines(lines) {
-    let insideMetadataBlock = false;
-    return lines.filter(line => {
-        // Check if we are at the start or end of a metadata block
-        if (isMetadataBlockStartOrEnd(line)) {
-            insideMetadataBlock = !insideMetadataBlock; // Toggle metadata block status
-            return false; // Skip metadata block markers
-        }
-
-        // Check if we are inside a metadata block or if the line is a comment
-        if (insideMetadataBlock || isCommentLine(line)) {
-            return false; // Skip lines inside metadata block or comments
-        }
-
-        // Return true for lines that are valid for processing (non-metadata, non-comment)
-        return line.trim().length > 0; // Only keep non-empty, valid lines
-    });
-}
-
-// Helper function to determine the type of diagram
-function determineDiagramType(lines) {
-    const diagramTypes = {
-        classDiagram: /^classDiagram/,
-        erDiagram: /^erDiagram/,
-        sequenceDiagram: /^sequenceDiagram/
-    };
-
-    // Skip metadata block lines and empty lines
-    const filteredLines = skipMetadataAndCommentLines(lines);
-
-    for (const line of filteredLines) {
-        // Check the line for a diagram type
-        for (const [type, pattern] of Object.entries(diagramTypes)) {
-            if (pattern.test(line)) {
-                return type;
-            }
-        }
-    }
-
-    throw new Error("Unsupported or unrecognized diagram type.");
-}
 
 // Main function to parse Mermaid code to JSON structure
 function convertToUML(mermaidCode) {
@@ -64,8 +12,8 @@ function convertToUML(mermaidCode) {
     // Filter out metadata and comment lines
     const filteredLines = skipMetadataAndCommentLines(lines);
 
-    // Store the parsed data
-    const jsonResult = { type: '', classes: [], relationships: [], entities: [] }; 
+    // Initialize the parsed data object with the diagram type
+    const jsonResult = { type: '' };
 
     // Determine the type of diagram from the filtered lines
     jsonResult.type = determineDiagramType(filteredLines);

@@ -142,6 +142,58 @@ const mapClassVisibilityToSymbol = visibility => ({
     'package': '~'
 }[visibility] || '~');
 
+// Helper function to identify the start or end of a metadata block
+function isMetadataBlockStartOrEnd(line) {
+    return line === '---';
+}
+
+// Helper function to identify single-line comments
+function isCommentLine(line) {
+    return line.startsWith('%%');
+}
+
+// Helper function to skip metadata block and comment lines
+function skipMetadataAndCommentLines(lines) {
+    let insideMetadataBlock = false;
+    return lines.filter(line => {
+        // Check if we are at the start or end of a metadata block
+        if (isMetadataBlockStartOrEnd(line)) {
+            insideMetadataBlock = !insideMetadataBlock; // Toggle metadata block status
+            return false; // Skip metadata block markers
+        }
+
+        // Check if we are inside a metadata block or if the line is a comment
+        if (insideMetadataBlock || isCommentLine(line)) {
+            return false; // Skip lines inside metadata block or comments
+        }
+
+        // Return true for lines that are valid for processing (non-metadata, non-comment)
+        return line.trim().length > 0; // Only keep non-empty, valid lines
+    });
+}
+
+// Helper function to determine the type of diagram
+function determineDiagramType(filteredLines) {
+    
+    const diagramTypes = {
+        classDiagram: /^classDiagram/,
+        erDiagram: /^erDiagram/,
+        sequenceDiagram: /^sequenceDiagram/
+    };
+
+    // Iterate over filtered lines to identify the diagram type
+    for (const line of filteredLines) {
+        // Check the line for a diagram type
+        for (const [type, pattern] of Object.entries(diagramTypes)) {
+            if (pattern.test(line)) {
+                return type;
+            }
+        }
+    }
+
+    throw new Error("Unsupported or unrecognized diagram type.");
+}
+
 // Utility function to determine if a line should be ignored
 function shouldIgnoreLine(line, index, diagramType) {
     const trimmedLine = line.trim();
@@ -167,6 +219,8 @@ module.exports = {
     translateERDToSQLType,
     mapSymbolToClassVisibility, 
     mapClassVisibilityToSymbol,
+    skipMetadataAndCommentLines,
+    determineDiagramType,
     shouldIgnoreLine,
     isRelationshipLine,
     isClassRelationNavigable

@@ -61,6 +61,11 @@ function parseERDiagramRelationship(line, relationships) {
 
 // Parsing logic for ER diagrams
 function parseERDiagram(lines, jsonResult) {
+
+    // Initialize specific fields for an ER diagram
+    jsonResult.entities = [];
+    jsonResult.relationships = [];
+    
     let currentElement = null;
 
     lines.forEach((line, index) => {

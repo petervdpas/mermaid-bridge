@@ -21,7 +21,7 @@ function importMermaid() {
                 if (mermaidCode) {
                     try {
                         var parsedDiagram = convertToUML(mermaidCode);
-                        console.log("Parsed Mermaid-diagram:", parsedDiagram);
+                        console.log("Parsed diagram:", parsedDiagram);
                         generateUML(parsedDiagram);
                     } catch (err) {
                         app.toast.error(err.message);

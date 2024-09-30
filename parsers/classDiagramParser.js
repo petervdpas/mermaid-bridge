@@ -33,6 +33,11 @@ function parseClassDiagramRelationship(line, relationships) {
 
 // Parsing logic for class diagrams
 function parseClassDiagram(lines, jsonResult) {
+    
+    // Initialize specific fields for a class diagram
+    jsonResult.classes = [];
+    jsonResult.relationships = [];
+
     let currentElement = null;
 
     lines.forEach((line, index) => {
