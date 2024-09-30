@@ -6,7 +6,22 @@ const {
 } = require('./utils/utils');
 
 function convertToMermaid(model) {
-    let mermaidCode = 'classDiagram\n';
+
+    let mermaidCode = '';
+
+    switch (true) {
+        case model instanceof type.UMLModel:
+            mermaidCode += 'classDiagram\n';
+            break;
+
+        case model instanceof type.ERDDataModel:
+            mermaidCode += 'erDiagram\n';
+            break;
+
+        default:
+            app.toast.error('Unknown model type');
+            return '';  // Return an empty string if the model type is unknown
+    }
 
     const classMap = generateClassDefinitions(model);
     const relationshipBuffer = generateRelationships(model);

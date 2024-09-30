@@ -35,6 +35,11 @@ function exportToMermaid() {
         var selectedModel = selectedModels[0];
         var mermaidCode = convertToMermaid(selectedModel);
 
+        if (!mermaidCode) {
+            app.toast.error("Could not convert model to Mermaid code");
+            return;
+        }
+        
         app.dialogs.showTextDialog("Generated Mermaid Code:", mermaidCode);
     }
     catch (err) {
