@@ -37,21 +37,11 @@ function generateEntityDefinitions(model) {
             element.columns.forEach(col => {
                 let columnDef = `    ${translateERDToSQLType(col.type)} ${col.name}`;
 
-                // Prepare properties in quotes (e.g., "length: 100, nullable: true")
-                let properties = [];
-                if (col.length) {
-                    properties.push(`length: ${col.length}`);
-                }
-                if (col.nullable === 'true') {
-                    properties.push('nullable: true');
-                } else if (col.nullable === 'false') {
-                    properties.push('nullable: false');
-                }
+                // Add keys (e.g., PK, FK, UK) if present
+                columnDef += getColumnKeys(col);
 
-                // Add properties in quotes if they exist
-                if (properties.length > 0) {
-                    columnDef += ` "${properties.join(', ')}"`;
-                }
+                // Add properties in quotes (e.g., "length: 100, nullable: true") if present
+                columnDef += getColumnProperties(col);
 
                 columnDef += '\n';
                 entityDef += columnDef;
@@ -63,6 +53,36 @@ function generateEntityDefinitions(model) {
     });
 
     return entityMap;
+}
+
+// Function to prepare and add keys (e.g., PK, FK, UK) if present
+function getColumnKeys(col) {
+    let keys = [];
+    if (col.primaryKey) {
+        keys.push('PK');
+    }
+    if (col.foreignKey) {
+        keys.push('FK');
+    }
+    if (col.unique) {
+        keys.push('UK');
+    }
+    return keys.length > 0 ? ` ${keys.join(',')}` : '';
+}
+
+// Function to prepare properties in quotes (e.g., "length: 100, nullable: true") if present
+function getColumnProperties(col) {
+    let properties = [];
+    if (col.length) {
+        properties.push(`length: ${col.length}`);
+    }
+    if (col.nullable === 'true') {
+        properties.push('nullable: true');
+    } else if (col.nullable === 'false') {
+        properties.push('nullable: false');
+    }
+
+    return properties.length > 0 ? ` "${properties.join(', ')}"` : '';
 }
 
 // Function to generate relationships (placeholder for now)
@@ -79,11 +99,11 @@ function generateRelationships(model) {
 // Process relationships recursively
 function processRelationshipRecursive(element, relationshipBuffer) {
     if (element instanceof type.ERDRelationship) {
-        const { end1, end2 } = element;
+        const { name, identifying, end1, end2 } = element;
         const from = end1.reference.name;
         const to = end2.reference.name;
-        const relationSymbol = determineERSymbol(end1, end2);
-        addRelationshipToBuffer(from, relationSymbol, to, element.name, relationshipBuffer);
+        const relationSymbol = determineERrelation(end1.cardinality, end2.cardinality, identifying);
+        addRelationshipToBuffer(from, relationSymbol, to, name, relationshipBuffer);
     }
 
     element.ownedElements?.forEach(ownedElement => {
@@ -91,9 +111,33 @@ function processRelationshipRecursive(element, relationshipBuffer) {
     });
 }
 
+// Function to get the multiplicity symbol for ER diagrams
+function getMultiplicity(m, reverse) {
+    switch (m) {
+        case '0..1':
+            return reverse ? 'o|' : '|o';
+        case '1':
+            return '||';
+        case '0..*':
+            return reverse ? 'o{' : '}o';
+        case '1..*':
+            return reverse ? '|{' : '}|';
+        default:
+            return ''; // Default empty if type not recognized
+    }
+}
+
 // Determine the relationship symbol for ER diagrams
-function determineERSymbol(end1, end2) {
-    return '--'; // Customize for ER relationship types like OneToMany, etc.
+function determineERrelation(cardinality1, cardinality2, identifying) {
+    const fromMultiplicity = getMultiplicity(cardinality1, false);
+    const toMultiplicity = getMultiplicity(cardinality2, true);
+
+    if (!fromMultiplicity || !toMultiplicity) {
+        console.warn(`Invalid cardinalities: ${cardinality1}, ${cardinality2}`);
+    }
+
+    const relationStrength = identifying ? '--' : '..';
+    return `${fromMultiplicity}${relationStrength}${toMultiplicity}`;
 }
 
 // Helper to add a relationship to the buffer
