@@ -1,6 +1,7 @@
-// umlProcess.js
+// umlProcessor.js
 
 const { appendClassDiagamToMermaid } = require('./uml-processors/classDiagramProcessor');
+const { appendERDiagamToMermaid } = require('./uml-processors/erDiagramProcessor');
 
 function convertToMermaid(model) {
 
@@ -12,7 +13,7 @@ function convertToMermaid(model) {
             break;
 
         case model instanceof type.ERDDataModel:
-            mermaidCode += 'erDiagram\n';
+            mermaidCode += appendERDiagamToMermaid(model);
             break;
 
         default:

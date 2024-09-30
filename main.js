@@ -5,7 +5,11 @@ const { convertToMermaid } = require('./umlProcessor');
 const { generateUML } = require('./umlGenerator');
 
 function aboutMermaid() {
-    app.dialogs.showInfoDialog("Mermaid Bridge is a plugin for StarUML that allows you to import and export UML diagrams using Mermaid syntax. Mermaid is a simple markdown-like script language for generating charts from text via JavaScript. For more information, visit the Mermaid website: https://mermaid-js.github.io/mermaid/");
+    app.dialogs.showInfoDialog(
+        "Mermaid Bridge is a plugin for StarUML that allows you \n" +
+        "to import and export UML diagrams using Mermaid syntax. \n" +
+        "For more information, visit: \n" + 
+        "https://github.com/petervdpas/mermaid-bridge");
 }
 
 function importMermaid() {
