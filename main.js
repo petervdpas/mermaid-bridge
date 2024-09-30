@@ -36,7 +36,7 @@ function exportToMermaid() {
         var mermaidCode = convertToMermaid(selectedModel);
 
         if (!mermaidCode) {
-            app.toast.error("Could not convert model to Mermaid code");
+            app.toast.error("Could not convert model to Mermaid code or model type is unknown");
             return;
         }
         

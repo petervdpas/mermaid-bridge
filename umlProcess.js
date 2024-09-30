@@ -11,7 +11,7 @@ function convertToMermaid(model) {
 
     switch (true) {
         case model instanceof type.UMLModel:
-            mermaidCode += 'classDiagram\n';
+            mermaidCode += appendClassDiagamToMermaid(model);
             break;
 
         case model instanceof type.ERDDataModel:
@@ -19,24 +19,30 @@ function convertToMermaid(model) {
             break;
 
         default:
-            app.toast.error('Unknown model type');
             return '';  // Return an empty string if the model type is unknown
     }
+
+    return mermaidCode;
+}
+
+// Function to append classes/entities and relationships to Mermaid code
+function appendClassDiagamToMermaid(model) {
+    let mermaidElements = 'classDiagram\n';
 
     const classMap = generateClassDefinitions(model);
     const relationshipBuffer = generateRelationships(model);
 
-    // Append classes to Mermaid code
+    // Append classes/entities to Mermaid code
     classMap.forEach(classDef => {
-        mermaidCode += classDef;
+        mermaidElements += classDef;
     });
 
     // Append relationships to Mermaid code
     relationshipBuffer.forEach(relation => {
-        mermaidCode += `${relation}\n`;
+        mermaidElements += `${relation}\n`;
     });
 
-    return mermaidCode;
+    return mermaidElements;
 }
 
 // Function to generate class definitions
