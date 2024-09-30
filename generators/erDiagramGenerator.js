@@ -1,4 +1,4 @@
-// generatores/erDiagramGenerator.js
+// generators/erDiagramGenerator.js
 
 const { 
     createDiagram,

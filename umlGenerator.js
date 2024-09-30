@@ -2,6 +2,7 @@
 
 const { generateClassDiagram } = require('./generators/classDiagramGenerator');
 const { generateERDiagram } = require('./generators/erDiagramGenerator');
+const { generateSequenceDiagram } = require('./generators/sequenceDiagramGenerator');
 
 function generateUML(parsedDiagram) {
     if (!parsedDiagram) {
@@ -24,6 +25,10 @@ function generateUML(parsedDiagram) {
         
         case 'erDiagram':
             generateERDiagram(project, parsedDiagram);
+            break;
+
+        case 'sequenceDiagram':
+            generateSequenceDiagram(project, parsedDiagram);
             break;
 
         default:

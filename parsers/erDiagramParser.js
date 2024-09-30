@@ -59,6 +59,69 @@ function parseERDiagramRelationship(line, relationships) {
     }
 }
 
+// Parsing logic for ER diagrams
+function parseERDiagram(lines, jsonResult) {
+    let currentElement = null;
+
+    lines.forEach((line, index) => {
+        // Use the utility to check if the line should be ignored
+        if (shouldIgnoreLine(line, index, 'erDiagram')) {
+            return; 
+        }
+
+        // Check if the line is a relationship
+        if (isRelationshipLine(line, 'erDiagram')) {
+            parseERDiagramRelationship(line, jsonResult.relationships, 'erDiagram');
+        }
+        // Start of a new entity block (e.g., "CUSTOMER {")
+        else if (line.includes('{')) {
+            // Push the current entity before starting a new one
+            if (currentElement) {
+                jsonResult.entities.push(currentElement);
+            }
+            const entityName = line.split('{')[0].trim();  // Extract entity name
+            currentElement = { name: entityName, columns: [] }; // Create a new entity
+        }
+        // End of the current entity block (e.g., "}")
+        else if (line.includes('}') && currentElement) {
+            jsonResult.entities.push(currentElement);
+            currentElement = null; // Close the current entity
+        }
+        // Parsing fields (attributes) inside an entity (e.g., "string name")
+        else if (currentElement && /\S+\s+\S+/.test(line)) {
+            const regex = /(\S+)\s+(\S+)\s*([A-Za-z,]+)?\s*(?:"([^"]+)")?/;  // Regex pattern to match type, name, keys, and properties
+            const match = line.match(regex);
+
+            if (match) {
+                const [_, type, name, keyString = '', propertiesString = ''] = match;
+
+                // Parse keys and properties
+                const fieldKeys = parseKeys(keyString.trim());
+                const fieldProps = parseFieldProperties(`"${propertiesString}"`); 
+
+                // Push the parsed field into the current entity
+                currentElement.columns.push({
+                    type: type,
+                    name: name,
+                    keys: fieldKeys, 
+                    properties: fieldProps
+                });
+            } else {
+                console.warn(`Unrecognized line in entity: ${line}`);
+            }
+        } 
+        // Unrecognized line outside of entity or relationship
+        else {
+            console.warn(`Unrecognized line in erDiagram: ${line}`);
+        }
+    });
+
+    // Ensure the last entity is pushed if the file ends without a closing `}`
+    if (currentElement) {
+        jsonResult.entities.push(currentElement);
+    }
+}
+
 // Helper function to parse field properties like "length: 100, nullable: true"
 function parseFieldProperties(fieldString) {
     const propertyPattern = /"([^"]+)"/; // Extracts the part within quotes
@@ -83,66 +146,5 @@ function parseKeys(keyString) {
     const keys = keyString.split(',').map(key => key.trim());
     return keys.filter(key => validKeys.includes(key));
 }
-
-// Parsing logic for ER diagrams
-function parseERDiagram(lines, jsonResult) {
-    let currentElement = null;
-
-    lines.forEach((line, index) => {
-        // Use the utility to check if the line should be ignored
-        if (shouldIgnoreLine(line, index, 'erDiagram')) {
-            return; 
-        }
-
-        // Check if the line is a relationship
-        if (isRelationshipLine(line, 'erDiagram')) {
-            parseERDiagramRelationship(line, jsonResult.relationships, 'erDiagram');
-        }
-        // Start of a new entity block
-        else if (line.includes('{')) {
-            // Push the current entity before starting a new one
-            if (currentElement) {
-                jsonResult.entities.push(currentElement);
-            }
-            currentElement = { name: line.split(' ')[0], columns: [] }; // Create a new entity
-        }
-        // End of the current entity block
-        else if (line.includes('}') && currentElement) {
-            jsonResult.entities.push(currentElement);
-            currentElement = null; // Close the current entity
-        }
-        // Parsing fields (attributes) inside an entity
-        else if (currentElement && line.includes(' ')) {
-            const regex = /(\S+)\s+(\S+)\s+([A-Za-z,]+)?\s*(?:"([^"]+)")?/;  // Regex pattern to match type, name, keys, and properties
-            const match = line.match(regex);
-
-            if (match) {
-                const [_, type, name, keyString = '', propertiesString = ''] = match;
-
-                // Parse keys and properties
-                const fieldKeys = parseKeys(keyString.trim());
-                const fieldProps = parseFieldProperties(`"${propertiesString}"`); 
-
-                // Push the parsed field into the current entity
-                currentElement.columns.push({
-                    type: type,
-                    name: name,
-                    keys: fieldKeys, 
-                    properties: fieldProps
-                });
-            } else {
-                console.warn(`Unrecognized line in erDiagram: ${line}`);
-            }
-        } else {
-            console.warn(`Unrecognized line in erDiagram: ${line}`);
-        }
-    });
-
-    // Ensure the last entity is pushed if the file ends without a closing `}`
-    if (currentElement) {
-        jsonResult.entities.push(currentElement);
-    }
-}
-
 
 module.exports = { parseERDiagram };

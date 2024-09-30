@@ -1,4 +1,4 @@
-// generatores/classDiagramGenerator.js
+// generators/classDiagramGenerator.js
 
 const {
     createDiagram,
