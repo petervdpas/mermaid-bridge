@@ -77,6 +77,13 @@ function parseFieldProperties(fieldString) {
     return {};
 }
 
+// Helper function to parse the keys like PK, FK, UK
+function parseKeys(keyString) {
+    const validKeys = ['PK', 'FK', 'UK']; // Define valid keys
+    const keys = keyString.split(',').map(key => key.trim());
+    return keys.filter(key => validKeys.includes(key));
+}
+
 // Parsing logic for ER diagrams
 function parseERDiagram(lines, jsonResult) {
     let currentElement = null;
@@ -97,7 +104,7 @@ function parseERDiagram(lines, jsonResult) {
             if (currentElement) {
                 jsonResult.entities.push(currentElement);
             }
-            currentElement = { name: line.split(' ')[0], attributes: [] }; // Create a new entity
+            currentElement = { name: line.split(' ')[0], columns: [] }; // Create a new entity
         }
         // End of the current entity block
         else if (line.includes('}') && currentElement) {
@@ -106,14 +113,26 @@ function parseERDiagram(lines, jsonResult) {
         }
         // Parsing fields (attributes) inside an entity
         else if (currentElement && line.includes(' ')) {
-            const [type, name, ...propertyParts] = line.split(' ');
-            const properties = propertyParts.join(' ').trim(); // Extract properties in quotes
-            const fieldProps = parseFieldProperties(properties); // Parse properties like length, nullable
-            currentElement.attributes.push({
-                type: type,
-                name: name,
-                properties: fieldProps
-            });
+            const regex = /(\S+)\s+(\S+)\s+([A-Za-z,]+)?\s*(?:"([^"]+)")?/;  // Regex pattern to match type, name, keys, and properties
+            const match = line.match(regex);
+
+            if (match) {
+                const [_, type, name, keyString = '', propertiesString = ''] = match;
+
+                // Parse keys and properties
+                const fieldKeys = parseKeys(keyString.trim());
+                const fieldProps = parseFieldProperties(`"${propertiesString}"`); 
+
+                // Push the parsed field into the current entity
+                currentElement.columns.push({
+                    type: type,
+                    name: name,
+                    keys: fieldKeys, 
+                    properties: fieldProps
+                });
+            } else {
+                console.warn(`Unrecognized line in erDiagram: ${line}`);
+            }
         } else {
             console.warn(`Unrecognized line in erDiagram: ${line}`);
         }
@@ -124,5 +143,6 @@ function parseERDiagram(lines, jsonResult) {
         jsonResult.entities.push(currentElement);
     }
 }
+
 
 module.exports = { parseERDiagram };

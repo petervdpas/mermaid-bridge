@@ -1,6 +1,6 @@
 // umlFactory.js
 
-const { translateSQLType } = require('./utils/utils');
+const { translateSQLToERDType } = require('./utils/utils');
 
 // Generic function to create a diagram
 function createDiagram({ idType, parent, name, defaultDiagram = false }) {
@@ -54,7 +54,10 @@ function addClassElement(elemType, parent, field, inElements) {
 // Generic function to add elements (columns) to an ERD entity
 function addERDElement(elemType, parent, field, inElements) {
 
-    var properties = inElements.properties;
+    var keys = inElements.keys || [];
+    var properties = inElements.properties || {}; 
+
+    console.log('keys:', keys);
 
     app.factory.createModel({
         id: elemType,
@@ -62,8 +65,11 @@ function addERDElement(elemType, parent, field, inElements) {
         field: field,
         modelInitializer: function (elem) {
             elem.name = inElements.name;
-            elem.type = translateSQLType(inElements.type);
+            elem.type = translateSQLToERDType(inElements.type);
             elem.length = properties.length || '';
+            elem.primaryKey = keys.includes('PK');
+            elem.foreignKey = keys.includes('FK');
+            elem.unique = keys.includes('UK');
             elem.nullable = properties.nullable || false;
         }
     });

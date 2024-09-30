@@ -62,7 +62,8 @@ function parseMermaidToJSON(mermaidCode) {
     // Filter out metadata and comment lines
     const filteredLines = skipMetadataAndCommentLines(lines);
 
-    const jsonResult = { type: '', classes: [], relationships: [], entities: [], flowchart: [] };
+    // Store the parsed data
+    const jsonResult = { type: '', classes: [], relationships: [], entities: [] }; 
 
     // Determine the type of diagram from the filtered lines
     jsonResult.type = determineDiagramType(filteredLines);

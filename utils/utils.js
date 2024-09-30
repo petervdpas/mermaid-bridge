@@ -27,7 +27,7 @@ const relationshipTypes = {
 };
 
 // Function to translate SQL data types into StarUML/ERD types
-function translateSQLType(sqlType) {
+function translateSQLToERDType(sqlType) {
     switch (sqlType.toLowerCase()) {
         case 'int':
         case 'integer':
@@ -79,6 +79,50 @@ function translateSQLType(sqlType) {
     }
 }
 
+// Function to translate StarUML/ERD types back into SQL data types
+function translateERDToSQLType(erdType) {
+    switch (erdType.toUpperCase()) {
+        case 'INTEGER':
+            return 'int';  // Translate to SQL integer
+        case 'BIGINT':
+            return 'bigint';  // Translate to SQL bigint
+        case 'SMALLINT':
+            return 'smallint';  // Translate to SQL smallint
+        case 'BIT':
+            return 'tinyint';  // Translate to SQL tinyint
+        case 'DECIMAL':
+            return 'decimal';  // Translate to SQL decimal
+        case 'FLOAT':
+            return 'float';  // Translate to SQL float
+        case 'DOUBLE':
+            return 'double';  // Translate to SQL double
+        case 'CHAR':
+            return 'char';  // Translate to SQL char
+        case 'VARCHAR':
+            return 'varchar';  // Translate to SQL varchar
+        case 'BINARY':
+            return 'binary';  // Translate to SQL binary
+        case 'VARBINARY':
+            return 'varbinary';  // Translate to SQL varbinary
+        case 'BLOB':
+            return 'blob';  // Translate to SQL blob
+        case 'DATE':
+            return 'date';  // Translate to SQL date
+        case 'TIME':
+            return 'time';  // Translate to SQL time
+        case 'DATETIME':
+            return 'datetime';  // Translate to SQL datetime
+        case 'TIMESTAMP':
+            return 'timestamp';  // Translate to SQL timestamp
+        case 'BOOLEAN':
+            return 'boolean';  // Translate to SQL boolean
+        case 'GEOMETRY':
+            return 'geometry';  // Translate to SQL geometry
+        default:
+            return erdType;  // If no match is found, use the original type
+    }
+}
+
 // Translate visibility symbols (e.g., +, -, #) to UML visibility keywords (e.g., public, private)
 function mapSymbolToClassVisibility(symbol) {
     const visibilityMap = {
@@ -119,7 +163,8 @@ function isClassRelationNavigable(navigable) {
 
 module.exports = {
     relationshipTypes,
-    translateSQLType, 
+    translateSQLToERDType,
+    translateERDToSQLType,
     mapSymbolToClassVisibility, 
     mapClassVisibilityToSymbol,
     shouldIgnoreLine,

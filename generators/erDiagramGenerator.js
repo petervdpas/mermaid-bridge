@@ -10,8 +10,6 @@ const {
 // Function to create relationships between ERD entities
 function createERDRelationship(relation, fromView, toView, diagram) {
 
-    console.log(relation);
-
     if (!diagram || !fromView || !toView) {
         app.toast.error("ERDiagram, Parent- or child-entity is missing.");
         return;
@@ -84,7 +82,7 @@ function generateERDiagram(project, parsedDiagram) {
 
         entityViewMap[entity.name] = newEntity;
 
-        entity.attributes.forEach(elements => {
+        entity.columns.forEach(elements => {
             addERDElement("ERDColumn", newEntity.model, "columns", elements);
         });
     });
