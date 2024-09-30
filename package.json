@@ -2,7 +2,8 @@
   "name": "mermaid-bridge",
   "title": "Mermaid Bridge",
   "description": "A StarUML extension to convert Mermaid diagrams to UML and vice versa",
-  "version": "1.0.0",
+  "homepage": "https://github.com/petervdpas/mermaid-bridge",
+  "version": "1.0.2",
   "keywords": [
     "mermaid",
     "import",

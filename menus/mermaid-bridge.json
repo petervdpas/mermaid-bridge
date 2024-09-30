@@ -8,6 +8,11 @@
           "id": "tool.mermaid-bridge",
           "submenu": [
             {
+              "label": "About Mermaid Bridge",
+              "id": "tool.mermaid-bridge-about",
+              "command": "mermaid-bridge:about"
+            },
+            {
               "label": "Import from Mermaid",
               "id": "tool.mermaid-bridge-import",
               "command": "mermaid-bridge:import"
