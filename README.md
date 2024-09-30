@@ -133,6 +133,48 @@ erDiagram
 
 > Mermaid ER Diagram... after moving stuff around
 
+**The following is an example of a Sequence diagram in Mermaid syntax:**
+
+```mermaid
+---
+title: Database Authentication for Alice
+author: Peter van de Pas
+---
+sequenceDiagram
+    participant User as Alice
+    participant System as Authentication System
+    participant DB as Database
+
+    Note right of User: Trying to log in
+
+    User->>System: Enter username and password
+    activate System
+    alt Valid Credentials
+        System->>DB: Check credentials
+        activate DB
+        DB-->>System: Credentials valid
+        deactivate DB
+        System-->>User: Login successful
+    else Invalid Credentials
+        System-->>User: Login failed
+    end
+    deactivate System
+
+    opt Remember me selected
+        System->>DB: Store session data
+    end
+
+    break When the database is down
+        System->>User: Cannot connect to the database
+    end
+
+    Note left of DB: Self-check on data consistency
+    DB->>DB: Run consistency check
+    activate DB
+    DB-->>DB: Fix inconsistencies
+    deactivate DB
+```
+
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue if you have any suggestions or improvements.
