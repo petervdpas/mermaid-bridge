@@ -7,6 +7,9 @@ const {
     createPositionedDirectedModelAndView
 } = require('../umlFactory');
 
+let currentXPosition = 50;
+const aliasMultiplier = 10;
+
 // Function to generate a Sequence Diagram
 function generateSequenceDiagram(project, parsedDiagram) {
 
@@ -41,16 +44,21 @@ function generateSequenceDiagram(project, parsedDiagram) {
     // Create lifelines for each participant in the parsed diagram
     parsedDiagram.participants.forEach((participant, index) => {
 
+        var participantAlias = participant.alias || participant.name;
+        const aliasWidth = participantAlias.length * aliasMultiplier;
+
+        const xPosition = currentXPosition + (index * 120);
+
         const lifelineView = createPositionedModelAndView({
             idType: "UMLLifeline",
             parent: sequenceDiagram._parent, 
             diagram: sequenceDiagram,
-            x1: 50 + (index * 100),
+            x1: xPosition,
             y1: 20,
-            x2: 50 + (index * 100),
+            x2: xPosition,
             y2: 20,
             dictionary: {
-                name: participant.alias || participant.name
+                name: participantAlias
             }
         });
 
@@ -61,8 +69,9 @@ function generateSequenceDiagram(project, parsedDiagram) {
         }
 
         lifelineViewMap[participant.name] = lifelineView;
-    });
 
+        currentXPosition += aliasWidth + 50;
+    });
 
     // Create messages between lifelines
     parsedDiagram.messages.forEach((message, index) => {
@@ -83,6 +92,7 @@ function generateSequenceDiagram(project, parsedDiagram) {
             to: toLifeline,
             dictionary: {
                 name: message.message,
+                messageSort: message.type
             }
         });
     });
