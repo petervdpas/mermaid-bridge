@@ -3,7 +3,8 @@
 const { 
     createDiagram,
     createModel,
-    createModelAndView,
+    createPositionedModelAndView,
+    createPositionedDirectedModelAndView
 } = require('../umlFactory');
 
 // Function to generate a Sequence Diagram
@@ -34,51 +35,53 @@ function generateSequenceDiagram(project, parsedDiagram) {
         defaultDiagram: true
     });
 
-    // Map to store created lifeline views for reference
+    // Step 2: Create Lifelines and Messages
     const lifelineViewMap = {};
 
-    // Create lifelines for participants and rename their associated roles
-    parsedDiagram.participants.forEach(participant => {
-        // Create the lifeline and allow StarUML to automatically generate the associated role
-        const lifeline = createModelAndView({
+    // Create lifelines for each participant in the parsed diagram
+    parsedDiagram.participants.forEach((participant, index) => {
+
+        const lifelineView = createPositionedModelAndView({
             idType: "UMLLifeline",
-            parent: interaction,
+            parent: sequenceDiagram._parent, 
             diagram: sequenceDiagram,
+            x1: 50 + (index * 100),
+            y1: 20,
+            x2: 50 + (index * 100),
+            y2: 20,
             dictionary: {
-                name: participant.name || participant.name
+                name: participant.alias || participant.name
             }
         });
 
-        var represent = lifeline.model.represent;
-        console.log("Lifeline: ", represent);
-
-        // Rename the auto-generated role linked to the lifeline (if applicable)
-        if (represent instanceof type.UMLAttribute) {
-            represent.name = participant.name;  // Rename role to participant's name
-        }
-
-        // Store the lifeline for later reference in messages
-        lifelineViewMap[participant.name] = lifeline;
+        lifelineViewMap[participant.name] = lifelineView;
     });
 
-    /*
+
     // Create messages between lifelines
-    parsedDiagram.messages.forEach(message => {
+    parsedDiagram.messages.forEach((message, index) => {
         const fromLifeline = lifelineViewMap[message.from];
         const toLifeline = lifelineViewMap[message.to];
 
-        // Add a message between lifelines
-        createModelAndView({
+        var reindex = index + 1;
+
+        const messageView = createPositionedDirectedModelAndView({
             idType: "UMLMessage",
-            parent: sequenceDiagram,
+            parent: sequenceDiagram._parent, 
             diagram: sequenceDiagram,
-            nameKey: "message",
-            nameValue: message.message,
-            fromLifeline: fromLifeline,
-            toLifeline: toLifeline,
-            type: message.type
+            x1: fromLifeline.left,
+            y1: fromLifeline.top + (reindex * 50),
+            x2: toLifeline.left,
+            y2: toLifeline.top + (reindex * 50),
+            from: fromLifeline,
+            to: toLifeline,
+            dictionary: {
+                name: message.message,
+            }
         });
     });
+
+    /*
 
     // Handle control structures (loops, breaks, alt, etc.)
     parsedDiagram.controlStructures.forEach(controlStructure => {

@@ -39,6 +39,46 @@ function createModelAndView({ idType, parent, diagram, dictionary = {} }) {
     });
 }
 
+// Generic function to create a model and view with a position, allowing one or many key-value pairs
+function createPositionedModelAndView({ idType, parent, diagram, x1, y1, x2, y2, dictionary = {} }) {
+    return app.factory.createModelAndView({
+        id: idType,
+        parent: parent,
+        diagram: diagram,
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        modelInitializer: function (elem) {
+            Object.entries(dictionary).forEach(([key, value]) => {
+                elem[key] = value;
+            });
+        }
+    });
+}
+
+// Generic function to create a model and view with a position and directed connection, allowing one or many key-value pairs
+function createPositionedDirectedModelAndView({ idType, parent, diagram, x1, y1, x2, y2, from, to, dictionary = {} }) {
+    return app.factory.createModelAndView({
+        id: idType,
+        parent: parent,
+        diagram: diagram,
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        tailView: from,
+        headView: to,
+        tailModel: from.model,
+        headModel: to.model,
+        modelInitializer: function (elem) {
+            Object.entries(dictionary).forEach(([key, value]) => {
+                elem[key] = value;
+            });
+        }
+    });
+}
+
 // Generic function to add elements (e.g., attributes, methods) to a UML class
 function addClassElement(elemType, parent, field, inElements) {
     app.factory.createModel({
@@ -79,6 +119,8 @@ module.exports = {
     createDiagram,
     createModel,
     createModelAndView,
+    createPositionedModelAndView,
+    createPositionedDirectedModelAndView,
     addClassElement,
     addERDElement
 };
