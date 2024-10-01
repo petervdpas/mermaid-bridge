@@ -54,6 +54,12 @@ function generateSequenceDiagram(project, parsedDiagram) {
             }
         });
 
+        // Rename the associated role created with the lifeline
+        const role = lifelineView.model.represent;
+        if (role) {
+            role.name = participant.name;  // Rename the role to the participant's name
+        }
+
         lifelineViewMap[participant.name] = lifelineView;
     });
 

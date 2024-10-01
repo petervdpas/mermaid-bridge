@@ -1,35 +1,82 @@
 // parsers/sequenceDiagramParser.js
 
-// Helper function to parse participants and actors
-function parseParticipantsAndActors(line, participants) {
+const { sequenceDiagramArrows } = require('../utils/utils');
+
+// Helper function to parse participants and assign roles (actor or regular participant)
+function parseParticipantsAndActors(line, participants, participantIndexMap) {
     const participantPattern = /^participant\s+(\w+)(?:\s+as\s+(\w+))?/;
-    const actorPattern = /^actor\s+(\w+)/;
-    
+    const actorPattern = /^actor\s+(\w+)(?:\s+as\s+(\w+))?/; // Actors can also have an alias
+
     let match = line.match(participantPattern);
     if (match) {
         const [_, name, alias] = match;
-        participants.push({ name: name, alias: alias || name });
+        const index = participants.length;  // Calculate the index based on current order (lines)
+
+        const participant = { 
+            name: name, 
+            alias: alias || name, 
+            role: 'role',  // Assign "role" as their type
+            index: index  // Store index in the object itself
+        };
+        
+        participants.push(participant);
+        participantIndexMap[participant.name] = index; // Map participant name to index
         return;
     }
 
     match = line.match(actorPattern);
     if (match) {
-        participants.push({ name: match[1], type: 'actor' });
+        const [_, name, alias] = match;
+        const index = participants.length;  // Calculate the index based on current order (lines)
+
+        const participant = { 
+            name: name, 
+            alias: alias || name, 
+            role: 'actor',  // Assign "actor" as their role
+            index: index  // Store index in the object itself
+        };
+        
+        participants.push(participant);
+        participantIndexMap[participant.name] = index; // Map participant name to index
     }
 }
 
-// Helper function to parse messages
-function parseMessages(line, messages) {
-    const messagePattern = /^(\w+)\s*(-{1,2}>>?)\s*(\w+)\s*:\s*(.+)$/;
+// Helper function to parse messages using sequenceDiagramArrows
+function parseMessages(line, messages, participants, participantIndexMap) {
+    const messagePattern = /^(\w+)\s*([<]{0,2}-{1,2}>>?|<-->|-{1,2}x|-)>\s*(\w+)\s*:\s*(.+)$/;
     const match = line.match(messagePattern);
+    
     if (match) {
         const [_, from, arrow, to, message] = match;
-        const type = arrow.includes('>>') ? 'asynchronous' : 'synchronous';
+        const fromIndex = participantIndexMap[from];
+        const toIndex = participantIndexMap[to];
+
+        // Retrieve participant details from the `participants` array
+        const fromParticipant = participants[fromIndex];
+        const toParticipant = participants[toIndex];
+
+        let messageSort = 'synchCall'; // Default to synchronous call
+        let direction = 'forward';  // Default direction
+
+        // Identify the message type based on arrow
+        const arrowType = sequenceDiagramArrows.arrows.find(entry => entry.pattern === arrow);
+        if (arrowType) {
+            messageSort = arrowType.type;
+        }
+
+        // Determine if this is a reply message (if the indices suggest a reverse direction)
+        if (toIndex < fromIndex) {
+            messageSort = 'reply';
+            direction = 'backward'; // Reverse direction (StarUML handles replies in reverse)
+        }
+
+        // Push the parsed message with participant roles/aliases and other details
         messages.push({
-            from: from,
-            to: to,
+            from: fromParticipant.name, // Participant name or alias
+            to: toParticipant.name, // Participant name or alias
             message: message,
-            type: type
+            type: messageSort,  // The StarUML message sort type
+            direction: direction  // Forward or reverse
         });
     }
 }
@@ -122,6 +169,7 @@ function parseNotes(line, notes) {
 
 // Main parsing function for sequence diagrams
 function parseSequenceDiagram(lines, jsonResult) {
+    const participantIndexMap = {};  // Initialize index map for participants
 
     // Initialize specific fields for a sequence diagram
     jsonResult.participants = [];
@@ -131,8 +179,8 @@ function parseSequenceDiagram(lines, jsonResult) {
     jsonResult.notes = [];
 
     lines.forEach(line => {
-        parseParticipantsAndActors(line, jsonResult.participants);
-        parseMessages(line, jsonResult.messages);
+        parseParticipantsAndActors(line, jsonResult.participants, participantIndexMap);
+        parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap);
         parseSelfMessages(line, jsonResult.messages);
         parseControlStructures(line, jsonResult.controlStructures);
         parseActivations(line, jsonResult.activations);

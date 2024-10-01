@@ -26,6 +26,21 @@ const relationshipTypes = {
     ]
 };
 
+const sequenceDiagramArrows = {
+    arrows: [
+        { type: 'synchCall', pattern: '->', description: 'Solid line without arrow' },
+        { type: 'asynchCall', pattern: '->>', description: 'Solid line with arrowhead' },
+        { type: 'synchCall', pattern: '-->', description: 'Dotted line without arrow' },
+        { type: 'asynchSignal', pattern: '-->>', description: 'Dotted line with arrowhead' },
+        { type: 'synchCall', pattern: '<<->>', description: 'Solid line with bidirectional arrowheads' },
+        { type: 'synchCall', pattern: '<<-->>', description: 'Dotted line with bidirectional arrowheads' },
+        { type: 'deleteMessage', pattern: '-x', description: 'Solid line with a cross at the end' },
+        { type: 'deleteMessage', pattern: '--x', description: 'Dotted line with a cross at the end' },
+        { type: 'asynchSignal', pattern: '-)', description: 'Solid line with open arrow at the end (async)' },
+        { type: 'asynchSignal', pattern: '--)', description: 'Dotted line with open arrow at the end (async)' },
+    ]
+};
+
 // Function to translate SQL data types into StarUML/ERD types
 function translateSQLToERDType(sqlType) {
     switch (sqlType.toLowerCase()) {
@@ -215,6 +230,7 @@ function isClassRelationNavigable(navigable) {
 
 module.exports = {
     relationshipTypes,
+    sequenceDiagramArrows,
     translateSQLToERDType,
     translateERDToSQLType,
     mapSymbolToClassVisibility, 
