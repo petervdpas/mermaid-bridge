@@ -24,7 +24,7 @@ function importMermaid() {
                         console.log("Parsed diagram:", parsedDiagram);
                         generateUML(parsedDiagram);
                     } catch (err) {
-                        app.toast.error(err.message);
+                        app.toast.error(err || "An unknown error occurred.");
                     }
                 }
             } else {
