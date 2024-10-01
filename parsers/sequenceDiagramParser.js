@@ -81,21 +81,6 @@ function parseMessages(line, messages, participants, participantIndexMap) {
     }
 }
 
-// Helper function to parse self-messages
-function parseSelfMessages(line, messages) {
-    const selfMessagePattern = /^(\w+)\s*->\s*\1\s*:\s*(.+)$/;
-    const match = line.match(selfMessagePattern);
-    if (match) {
-        const [_, participant, message] = match;
-        messages.push({
-            from: participant,
-            to: participant,
-            message: message,
-            type: 'self'
-        });
-    }
-}
-
 // Helper function to parse loops, breaks, and control structures
 function parseControlStructures(line, controlStructures) {
     const loopPattern = /^loop\s+(.+)/;
@@ -181,7 +166,6 @@ function parseSequenceDiagram(lines, jsonResult) {
     lines.forEach(line => {
         parseParticipantsAndActors(line, jsonResult.participants, participantIndexMap);
         parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap);
-        parseSelfMessages(line, jsonResult.messages);
         parseControlStructures(line, jsonResult.controlStructures);
         parseActivations(line, jsonResult.activations);
         parseNotes(line, jsonResult.notes);
