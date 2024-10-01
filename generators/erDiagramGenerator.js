@@ -76,8 +76,9 @@ function generateERDiagram(project, parsedDiagram) {
             idType: "ERDEntity",
             parent: erDiagram._parent,
             diagram: erDiagram,
-            nameKey: "name",
-            nameValue: entity.name
+            dictionary: {
+                name: entity.name
+            }
         });
 
         entityViewMap[entity.name] = newEntity;

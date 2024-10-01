@@ -4,7 +4,6 @@ const {
     createDiagram,
     createModel,
     createModelAndView,
-    createModelAndViewDictionary
 } = require('../umlFactory');
 
 // Function to generate a Sequence Diagram
@@ -38,28 +37,28 @@ function generateSequenceDiagram(project, parsedDiagram) {
     // Map to store created lifeline views for reference
     const lifelineViewMap = {};
 
-    // Create lifelines for participants
+    // Create lifelines for participants and rename their associated roles
     parsedDiagram.participants.forEach(participant => {
-
-        // Step 1: Create the role (UMLAttribute)
-        const role = createModel({
-            idType: "UMLAttribute",
-            parent: collaboration,
-            name: participant.name  // E.g., "User", "System", "DB"
-        });
-
-        // Step 2: Create the lifeline (UMLLifeline) and reference the role
-        const lifelineDict = createModelAndViewDictionary({
+        // Create the lifeline and allow StarUML to automatically generate the associated role
+        const lifeline = createModelAndView({
             idType: "UMLLifeline",
             parent: interaction,
             diagram: sequenceDiagram,
             dictionary: {
-                name: participant.alias || participant.name,  // E.g., "Alice"
-                represent: role  // Reference the role (UMLAttribute)
+                name: participant.name || participant.name
             }
         });
 
-        Object.assign(lifelineViewMap, lifelineDict);
+        var represent = lifeline.model.represent;
+        console.log("Lifeline: ", represent);
+
+        // Rename the auto-generated role linked to the lifeline (if applicable)
+        if (represent instanceof type.UMLAttribute) {
+            represent.name = participant.name;  // Rename role to participant's name
+        }
+
+        // Store the lifeline for later reference in messages
+        lifelineViewMap[participant.name] = lifeline;
     });
 
     /*

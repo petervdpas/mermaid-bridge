@@ -26,7 +26,7 @@ function createModel({ idType, parent, name }) {
 }
 
 // Generic function to create a model and view, allowing one or many key-value pairs
-function createModelAndViewDictionary({ idType, parent, diagram, dictionary = {} }) {
+function createModelAndView({ idType, parent, diagram, dictionary = {} }) {
     return app.factory.createModelAndView({
         id: idType,  // e.g., "UMLClass" or "ERDEntity"
         parent: parent,
@@ -35,18 +35,6 @@ function createModelAndViewDictionary({ idType, parent, diagram, dictionary = {}
             Object.entries(dictionary).forEach(([key, value]) => {
                 elem[key] = value;
             });
-        }
-    });
-}
-
-// Generic function to create a model and view for UMLClass or ERDEntity
-function createModelAndView({ idType, parent, diagram, nameKey, nameValue }) {
-    return app.factory.createModelAndView({
-        id: idType,  // e.g., "UMLClass" or "ERDEntity"
-        parent: parent,
-        diagram: diagram,
-        modelInitializer: function (elem) {
-            elem[nameKey] = nameValue;  // Use the passed key-value for name
         }
     });
 }
@@ -91,7 +79,6 @@ module.exports = {
     createDiagram,
     createModel,
     createModelAndView,
-    createModelAndViewDictionary,
     addClassElement,
     addERDElement
 };

@@ -88,8 +88,9 @@ function generateClassDiagram(project, parsedDiagram) {
             idType: "UMLClass",
             parent: classDiagram._parent,
             diagram: classDiagram,
-            nameKey: "name",
-            nameValue: cls.name
+            dictionary: {
+                name: cls.name
+            }
         });
 
         classViewMap[cls.name] = newClass;
