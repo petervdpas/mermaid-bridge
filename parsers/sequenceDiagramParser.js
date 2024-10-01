@@ -110,48 +110,6 @@ function parseControlStructures(line, controlStructures) {
     }
 }
 
-// Helper function to parse activations and deactivations
-function parseActivations(line, activations) {
-    const activatePattern = /^activate\s+(\w+)/;
-    const deactivatePattern = /^deactivate\s+(\w+)/;
-    const activateAsyncPattern = /^(\w+)->>\+(\w+)/;
-    const deactivateAsyncPattern = /^(\w+)->>\-(\w+)/;
-
-    let match = line.match(activatePattern);
-    if (match) {
-        activations.push({ type: 'activate', participant: match[1] });
-        return;
-    }
-
-    match = line.match(deactivatePattern);
-    if (match) {
-        activations.push({ type: 'deactivate', participant: match[1] });
-        return;
-    }
-
-    // Handle async activations with + and - notation
-    match = line.match(activateAsyncPattern);
-    if (match) {
-        activations.push({ type: 'activateAsync', participant: match[2], from: match[1] });
-        return;
-    }
-
-    match = line.match(deactivateAsyncPattern);
-    if (match) {
-        activations.push({ type: 'deactivateAsync', participant: match[2], from: match[1] });
-    }
-}
-
-// Helper function to parse notes
-function parseNotes(line, notes) {
-    const notePattern = /^Note\s+(left|right)\s+of\s+(\w+):\s*(.+)$/;
-    const match = line.match(notePattern);
-    if (match) {
-        const [_, position, participant, note] = match;
-        notes.push({ position: position, participant: participant, note: note });
-    }
-}
-
 // Main parsing function for sequence diagrams
 function parseSequenceDiagram(lines, jsonResult) {
     const participantIndexMap = {};  // Initialize index map for participants
@@ -160,15 +118,11 @@ function parseSequenceDiagram(lines, jsonResult) {
     jsonResult.participants = [];
     jsonResult.messages = [];
     jsonResult.controlStructures = [];
-    jsonResult.activations = [];
-    jsonResult.notes = [];
 
     lines.forEach(line => {
         parseParticipantsAndActors(line, jsonResult.participants, participantIndexMap);
         parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap);
         parseControlStructures(line, jsonResult.controlStructures);
-        parseActivations(line, jsonResult.activations);
-        parseNotes(line, jsonResult.notes);
     });
 }
 
