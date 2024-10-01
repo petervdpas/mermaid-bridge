@@ -2,127 +2,178 @@
 
 const { sequenceDiagramArrows } = require('../utils/utils');
 
-// Helper function to parse participants and assign roles (actor or regular participant)
 function parseParticipantsAndActors(line, participants, participantIndexMap) {
     const participantPattern = /^participant\s+(\w+)(?:\s+as\s+(\w+))?/;
-    const actorPattern = /^actor\s+(\w+)(?:\s+as\s+(\w+))?/; // Actors can also have an alias
+    const actorPattern = /^actor\s+(\w+)(?:\s+as\s+(\w+))?/;
 
     let match = line.match(participantPattern);
     if (match) {
         const [_, name, alias] = match;
-        const index = participants.length;  // Calculate the index based on current order (lines)
+        const index = participants.length;
 
-        const participant = { 
-            name: name, 
-            alias: alias || name, 
-            role: 'role',  // Assign "role" as their type
-            index: index  // Store index in the object itself
-        };
-        
+        const participant = { name: name, alias: alias || name, role: 'role', index: index };
         participants.push(participant);
-        participantIndexMap[participant.name] = index; // Map participant name to index
+        participantIndexMap[participant.name] = index;
         return;
     }
 
     match = line.match(actorPattern);
     if (match) {
         const [_, name, alias] = match;
-        const index = participants.length;  // Calculate the index based on current order (lines)
+        const index = participants.length;
 
-        const participant = { 
-            name: name, 
-            alias: alias || name, 
-            role: 'actor',  // Assign "actor" as their role
-            index: index  // Store index in the object itself
-        };
-        
+        const participant = { name: name, alias: alias || name, role: 'actor', index: index };
         participants.push(participant);
-        participantIndexMap[participant.name] = index; // Map participant name to index
+        participantIndexMap[participant.name] = index;
     }
 }
 
 // Helper function to parse messages using sequenceDiagramArrows
-function parseMessages(line, messages, participants, participantIndexMap) {
+function parseMessages(line, messages, participants, participantIndexMap, currentControlStructure) {
     const messagePattern = /^(\w+)\s*([<]{0,2}-{1,2}>>?|<-->|-{1,2}x|-)>\s*(\w+)\s*:\s*(.+)$/;
     const match = line.match(messagePattern);
-    
+
     if (match) {
         const [_, from, arrow, to, message] = match;
         const fromIndex = participantIndexMap[from];
         const toIndex = participantIndexMap[to];
 
-        // Retrieve participant details from the `participants` array
         const fromParticipant = participants[fromIndex];
         const toParticipant = participants[toIndex];
 
-        let messageSort = 'synchCall'; // Default to synchronous call
-        let direction = 'forward';  // Default direction
+        let messageSort = 'synchCall';
+        let direction = 'forward';
 
-        // Identify the message type based on arrow
         const arrowType = sequenceDiagramArrows.arrows.find(entry => entry.pattern === arrow);
         if (arrowType) {
             messageSort = arrowType.type;
         }
 
-        // Determine if this is a reply message (if the indices suggest a reverse direction)
         if (toIndex < fromIndex) {
             messageSort = 'reply';
-            direction = 'backward'; // Reverse direction (StarUML handles replies in reverse)
+            direction = 'backward';
         }
 
-        // Push the parsed message with participant roles/aliases and other details
-        messages.push({
-            from: fromParticipant.name, // Participant name or alias
-            to: toParticipant.name, // Participant name or alias
+        // Assign control structure index based on the active control structure
+        let controlStructureIndex = null;
+        if (currentControlStructure.length > 0) {
+            const lastControlStructure = currentControlStructure[currentControlStructure.length - 1];
+            controlStructureIndex = lastControlStructure.controlStructureIndex;  // Use explicit index
+        }
+
+        const messageObj = {
+            from: fromParticipant.name,
+            to: toParticipant.name,
             message: message,
-            type: messageSort,  // The StarUML message sort type
-            direction: direction  // Forward or reverse
-        });
+            type: messageSort,
+            direction: direction,
+            controlStructureIndex: controlStructureIndex // Store index instead of null
+        };
+
+        messages.push(messageObj);
     }
 }
 
-// Helper function to parse loops, breaks, and control structures
-function parseControlStructures(line, controlStructures) {
+// Helper function to parse control structures
+function parseControlStructures(line, controlStructures, currentControlStructure) {
     const loopPattern = /^loop\s+(.+)/;
     const breakPattern = /^break\s+(.+)/;
     const altPattern = /^alt\s+(.+)/;
     const elsePattern = /^else\s+(.+)/;
     const optPattern = /^opt\s+(.+)/;
     const endPattern = /^end/;
-    
+
     if (loopPattern.test(line)) {
         const loopCondition = line.match(loopPattern)[1];
-        controlStructures.push({ type: 'loop', condition: loopCondition });
+        const loopStructure = { type: 'loop', condition: loopCondition, messages: [], controlStructureIndex: controlStructures.length };
+        currentControlStructure.push(loopStructure);
+        controlStructures.push(loopStructure);
     } else if (breakPattern.test(line)) {
         const breakCondition = line.match(breakPattern)[1];
-        controlStructures.push({ type: 'break', condition: breakCondition });
+        const breakStructure = { type: 'break', condition: breakCondition, messages: [], controlStructureIndex: controlStructures.length };
+        currentControlStructure.push(breakStructure);
+        controlStructures.push(breakStructure);
     } else if (altPattern.test(line)) {
         const altCondition = line.match(altPattern)[1];
-        controlStructures.push({ type: 'alt', condition: altCondition });
+        const altStructure = { type: 'alt', condition: altCondition, messages: [], alternatives: [], controlStructureIndex: controlStructures.length };
+        currentControlStructure.push(altStructure);
+        controlStructures.push(altStructure);
     } else if (elsePattern.test(line)) {
-        const elseCondition = line.match(elsePattern)[1];
-        controlStructures.push({ type: 'else', condition: elseCondition });
+        const lastAlt = currentControlStructure[currentControlStructure.length - 1];
+        if (lastAlt && lastAlt.type === 'alt') {
+            const elseStructure = { type: 'else', messages: [], controlStructureIndex: controlStructures.length };
+            lastAlt.alternatives.push(elseStructure);
+        }
     } else if (optPattern.test(line)) {
         const optCondition = line.match(optPattern)[1];
-        controlStructures.push({ type: 'opt', condition: optCondition });
+        const optStructure = { type: 'opt', condition: optCondition, messages: [], controlStructureIndex: controlStructures.length };
+        currentControlStructure.push(optStructure);
+        controlStructures.push(optStructure);
     } else if (endPattern.test(line)) {
-        controlStructures.push({ type: 'end' });
+        const finishedStructure = currentControlStructure.pop();
+        if (currentControlStructure.length > 0) {
+            currentControlStructure[currentControlStructure.length - 1].messages.push(finishedStructure);
+        }
     }
+}
+
+// Function to parse and handle specific lines (notes, activations, deactivations)
+function parseSpecialLines(line, jsonResult) {
+    // Patterns for notes, activations, and deactivations
+    const notePattern = /^note\s+(left|right)\s+of\s+(\w+):\s*(.+)$/i;
+    const activatePattern = /^activate\s+(\w+)/i;
+    const deactivatePattern = /^deactivate\s+(\w+)/i;
+
+    // Handle note lines
+    let match = line.match(notePattern);
+    if (match) {
+        const [_, position, participant, note] = match;
+        jsonResult.notes.push({ position, participant, note });
+        return true;
+    }
+
+    // Handle activation lines
+    match = line.match(activatePattern);
+    if (match) {
+        jsonResult.activations.push({ type: 'activate', participant: match[1] });
+        return true;
+    }
+
+    // Handle deactivation lines
+    match = line.match(deactivatePattern);
+    if (match) {
+        jsonResult.activations.push({ type: 'deactivate', participant: match[1] });
+        return true;
+    }
+
+    return false; // If it's not a special line, return false
 }
 
 // Main parsing function for sequence diagrams
 function parseSequenceDiagram(lines, jsonResult) {
-    const participantIndexMap = {};  // Initialize index map for participants
-
-    // Initialize specific fields for a sequence diagram
+    const participantIndexMap = {};
     jsonResult.participants = [];
     jsonResult.messages = [];
     jsonResult.controlStructures = [];
+    jsonResult.notes = [];
+    jsonResult.activations = [];
+
+    const currentControlStructureStack = [];
 
     lines.forEach(line => {
+        // Skip and parse special lines (notes, activations, deactivations)
+        if (parseSpecialLines(line, jsonResult)) {
+            return; // Skip to the next line if it's a special line
+        }
+
+        // Parse participants, actors, control structures, and messages
         parseParticipantsAndActors(line, jsonResult.participants, participantIndexMap);
-        parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap);
-        parseControlStructures(line, jsonResult.controlStructures);
+
+        if (/^(loop|alt|opt|break|else|end)/.test(line)) {
+            parseControlStructures(line, jsonResult.controlStructures, currentControlStructureStack);
+        } else {
+            parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap, currentControlStructureStack);
+        }
     });
 }
 
