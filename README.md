@@ -48,6 +48,16 @@ This StarUML extension provides a two-way bridge for converting diagrams between
 2. The currently active class diagram in StarUML will be converted to Mermaid syntax.
 3. The resulting Mermaid code will be displayed, ready to be copied or saved.
 
+## StarUML Overview
+
+StarUML is a software modeling tool that supports UML, ERD, and other diagrams. You can download StarUML from [staruml.io](https://staruml.io/) for Windows, macOS, and Linux.
+
+To install extensions:
+
+- Open StarUML.
+- Go to Tools > Extension Manager.
+- Search for "Mermaid Bridge" or install directly from the downloaded files.
+
 ## Example Mermaid Syntax
 
 > You can try and edit the `mermaid-code` I added below, here (just copy&paste): [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/). You can also find more examples in the [Mermaid documentation](https://mermaid.js.org/intro/).
