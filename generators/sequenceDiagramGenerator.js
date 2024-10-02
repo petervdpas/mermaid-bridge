@@ -78,51 +78,119 @@ function generateSequenceDiagram(project, parsedDiagram) {
     handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap);
 }
 
-function  handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap) {
+// Function to handle control structures and their associated messages
+function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap) {
+    let currentYPosition = 140;
 
-    // Create messages between lifelines
-    parsedDiagram.messages.forEach((message, index) => {
-        const fromLifeline = lifelineViewMap[message.from];
-        const toLifeline = lifelineViewMap[message.to];
-
-        // Get the X positions of the lifelines
-        const fromX = lifelinePositionMap[message.from].left;
-        const toX = lifelinePositionMap[message.to].left;
+    while (parsedDiagram.messages.length > 0) {
+        const message = parsedDiagram.messages[0]; // Peek at the first message
 
         const controlStructure = findControlStructureBeforeMessage(
             message.controlStructureId, parsedDiagram.controlStructures);
 
         if (controlStructure) {
+            // Draw the combined fragment for the control structure
+            drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
 
-            console.log("Found control structure before message:", controlStructure);
-            parsedDiagram.controlStructures.pop(controlStructure); 
+            // Remove the control structure after it is used
+            parsedDiagram.controlStructures = parsedDiagram.controlStructures.filter(
+                cs => cs.controlStructureId !== controlStructure.controlStructureId);
+
+        } else {
+            // Draw the message
+            drawMessage(sequenceDiagram, message, lifelineViewMap);
+
+            // Remove the message from the list after processing
+            parsedDiagram.messages.shift();
         }
-                    
-        const messageView = createPositionedDirectedModelAndView({
-            idType: "UMLMessage",
-            parent: sequenceDiagram._parent, 
-            diagram: sequenceDiagram,
-            x1: fromX,
-            y1: currentYPosition,
-            x2: toX,
-            y2: currentYPosition,
-            from: fromLifeline,
-            to: toLifeline,
-            dictionary: {
-                name: message.message,
-                messageSort: message.type
-            }
-        });
 
-        // Increment the Y position for the next message
         currentYPosition += 50;
-    });
-
+    }
 }
 
-// Helper function to insert control structures before the corresponding messages
+// Function to draw a combined fragment for a control structure and handle its messages
+function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
+    const x1 = 50;
+    const x2 = currentXPosition + 200;
+    const y1 = currentYPosition;
+    const y2 = currentYPosition + 100;
+
+    const combinedFragment = createPositionedModelAndView({
+        idType: "UMLCombinedFragment",
+        parent: sequenceDiagram._parent,
+        diagram: sequenceDiagram,
+        x1: x1,
+        y1: y1,
+        x2: x2,
+        y2: y2,
+        dictionary: {
+            name: controlStructure.type,
+            condition: controlStructure.condition
+        }
+    });
+
+    currentYPosition += 100;
+
+    // If there are alternative branches (e.g., else), handle the messages for each branch
+    if (controlStructure.alternatives && controlStructure.alternatives.length > 0) {
+        controlStructure.alternatives.forEach(altStructure => {
+            const altMessages = findMessagesByControlStructureId(altStructure.controlStructureId, parsedDiagram.messages);
+
+            altMessages.forEach(message => {
+                drawMessage(sequenceDiagram, message, lifelineViewMap);
+                // Remove message from the list after processing
+                parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
+                currentYPosition += 50;
+            });
+        });
+    } else {
+        // Draw only the messages that belong to this control structure
+        const relatedMessages = findMessagesByControlStructureId(controlStructure.controlStructureId, parsedDiagram.messages);
+
+        relatedMessages.forEach(message => {
+            drawMessage(sequenceDiagram, message, lifelineViewMap);
+            // Remove message from the list once drawn
+            parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
+            currentYPosition += 50;
+        });
+    }
+
+    currentYPosition += 100; // After all messages in this fragment, move the Y position down
+}
+
+// Helper function to find a control structure before a specific message
 function findControlStructureBeforeMessage(controlStructureId, controlStructures) {
     return controlStructures.find(cs => cs.controlStructureId === controlStructureId);
+}
+
+// Helper function to find messages associated with a control structure
+function findMessagesByControlStructureId(controlStructureId, messages) {
+    return messages.filter(msg => msg.controlStructureId === controlStructureId);
+}
+
+// Function to draw a message
+function drawMessage(sequenceDiagram, message, lifelineViewMap) {
+    const fromLifeline = lifelineViewMap[message.from];
+    const toLifeline = lifelineViewMap[message.to];
+
+    const fromX = lifelinePositionMap[message.from].left;
+    const toX = lifelinePositionMap[message.to].left;
+
+    createPositionedDirectedModelAndView({
+        idType: "UMLMessage",
+        parent: sequenceDiagram._parent,
+        diagram: sequenceDiagram,
+        x1: fromX,
+        y1: currentYPosition,
+        x2: toX,
+        y2: currentYPosition,
+        from: fromLifeline,
+        to: toLifeline,
+        dictionary: {
+            name: message.message,
+            messageSort: message.type
+        }
+    });
 }
 
 module.exports = { generateSequenceDiagram };
