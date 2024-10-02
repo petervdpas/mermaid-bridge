@@ -65,11 +65,6 @@ function generateSequenceDiagram(project, parsedDiagram) {
             top: currentYPosition
         };
 
-        const role = lifelineView.model.represent;
-        if (role) {
-            role.name = participant.name;
-        }
-
         lifelineViewMap[participant.name] = lifelineView;
         currentXPosition += aliasWidth + 50;
     });
@@ -110,60 +105,39 @@ function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, life
 
 // Function to draw a combined fragment for a control structure and handle its messages
 function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
-    const x1 = 50; // Fixed starting point for fragments
-    const fragmentWidth = Math.max(...Object.values(lifelinePositionMap).map(pos => pos.left)) + 200; // Dynamically calculate width
+    const x1 = 50;
+    const x2 = currentXPosition + 200;
     const y1 = currentYPosition;
-    const y2 = currentYPosition + 100;
+    
+    // Get the messages associated with the fragment
+    const relatedMessages = findMessagesByControlStructureId(controlStructure.controlStructureId, parsedDiagram.messages);
+    const fragmentHeight = relatedMessages.length * 50; // Assume each message takes up 50px in height
 
+    // Create the combined fragment view
     const combinedFragment = createPositionedModelAndView({
         idType: "UMLCombinedFragment",
         parent: sequenceDiagram._parent,
         diagram: sequenceDiagram,
         x1: x1,
         y1: y1,
-        x2: fragmentWidth, // Use dynamically calculated width
-        y2: y2,
+        x2: x2,
+        y2: y1 + fragmentHeight + 100,  // Add margin for fragment header
         dictionary: {
             name: controlStructure.type,
             condition: controlStructure.condition
         }
     });
 
-    currentYPosition += 100;
+    currentYPosition += 50;  // Move Y position down after fragment header
 
-    // If there are alternative branches (e.g., else), handle the messages for each branch
-    if (controlStructure.alternatives && controlStructure.alternatives.length > 0) {
-        controlStructure.alternatives.forEach(altStructure => {
-            const altMessages = findMessagesByControlStructureId(altStructure.controlStructureId, parsedDiagram.messages);
+    // Draw the messages in the correct order inside the fragment
+    relatedMessages.forEach(message => {
+        drawMessage(sequenceDiagram, message, lifelineViewMap);
+        parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
+        currentYPosition += 50;
+    });
 
-            altMessages.forEach(message => {
-                drawMessage(sequenceDiagram, message, lifelineViewMap);
-                parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
-                currentYPosition += 50;
-            });
-        });
-    } else {
-        // Draw only the messages that belong to this control structure
-        const relatedMessages = findMessagesByControlStructureId(controlStructure.controlStructureId, parsedDiagram.messages);
-
-        relatedMessages.forEach(message => {
-            drawMessage(sequenceDiagram, message, lifelineViewMap);
-            parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
-            currentYPosition += 50;
-        });
-    }
-
-    currentYPosition += 100; // After all messages in this fragment, move the Y position down
-}
-
-// Helper function to find a control structure before a specific message
-function findControlStructureBeforeMessage(controlStructureId, controlStructures) {
-    return controlStructures.find(cs => cs.controlStructureId === controlStructureId);
-}
-
-// Helper function to find messages associated with a control structure
-function findMessagesByControlStructureId(controlStructureId, messages) {
-    return messages.filter(msg => msg.controlStructureId === controlStructureId);
+    currentYPosition += 50; // Adjust Y after fragment processing
 }
 
 // Function to draw a message
@@ -189,8 +163,16 @@ function drawMessage(sequenceDiagram, message, lifelineViewMap) {
             messageSort: message.type
         }
     });
+}
 
-    currentYPosition += 50; // Ensure consistent vertical spacing
+// Helper function to find a control structure before a specific message
+function findControlStructureBeforeMessage(controlStructureId, controlStructures) {
+    return controlStructures.find(cs => cs.controlStructureId === controlStructureId);
+}
+
+// Helper function to find messages associated with a control structure
+function findMessagesByControlStructureId(controlStructureId, messages) {
+    return messages.filter(msg => msg.controlStructureId === controlStructureId);
 }
 
 module.exports = { generateSequenceDiagram };
