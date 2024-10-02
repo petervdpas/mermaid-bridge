@@ -21,7 +21,8 @@ function importMermaid() {
                 if (mermaidCode) {
                     try {
                         var parsedDiagram = convertToUML(mermaidCode);
-                        console.log("Parsed diagram:", parsedDiagram);
+                        var diagramString = JSON.stringify(parsedDiagram, null, 2);  // Convert to string with pretty formatting (2 spaces)
+                        console.log("Parsed diagram (as string):", diagramString);
                         generateUML(parsedDiagram);
                     } catch (err) {
                         console.error(err);

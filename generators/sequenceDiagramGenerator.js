@@ -90,6 +90,15 @@ function generateSequenceDiagram(project, parsedDiagram) {
         const fromX = lifelinePositionMap[message.from].left;
         const toX = lifelinePositionMap[message.to].left;
 
+        const controlStructure = findControlStructureBeforeMessage(
+            message.controlStructureId, parsedDiagram.controlStructures);
+
+        if (controlStructure) {
+
+            console.log("Found control structure before message:", controlStructure);
+            parsedDiagram.controlStructures.pop(controlStructure); 
+        }
+                    
         const messageView = createPositionedDirectedModelAndView({
             idType: "UMLMessage",
             parent: sequenceDiagram._parent, 
@@ -110,6 +119,11 @@ function generateSequenceDiagram(project, parsedDiagram) {
         currentYPosition += 50;
     });
 
+}
+
+// Helper function to insert control structures before the corresponding messages
+function findControlStructureBeforeMessage(controlStructureId, controlStructures) {
+    return controlStructures.find(cs => cs.controlStructureId === controlStructureId);
 }
 
 module.exports = { generateSequenceDiagram };
