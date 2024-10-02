@@ -2,6 +2,7 @@
 
 const { sequenceDiagramArrows, generateGUID } = require('../utils/utils');
 
+// Helper function to parse participants and actors
 function parseParticipantsAndActors(line, participants, participantIndexMap) {
     const participantPattern = /^participant\s+(\w+)(?:\s+as\s+(\w+))?/;
     const actorPattern = /^actor\s+(\w+)(?:\s+as\s+(\w+))?/;
@@ -43,7 +44,8 @@ function parseControlStructures(line, controlStructures, currentControlStructure
             type: 'loop', 
             condition: loopCondition, 
             controlStructureId: generateGUID(), 
-            branch: 'main' 
+            branch: 'main',
+            messages: []
         };
         currentControlStructure.push(loopStructure);
         controlStructures.push(loopStructure);
@@ -53,7 +55,8 @@ function parseControlStructures(line, controlStructures, currentControlStructure
             type: 'break', 
             condition: breakCondition, 
             controlStructureId: generateGUID(), 
-            branch: 'main' 
+            branch: 'main',
+            messages: [] 
         };
         currentControlStructure.push(breakStructure);
         controlStructures.push(breakStructure);
@@ -64,7 +67,8 @@ function parseControlStructures(line, controlStructures, currentControlStructure
             condition: altCondition, 
             alternatives: [], 
             controlStructureId: generateGUID(), 
-            branch: 'alt' 
+            branch: 'alt',
+            messages: []
         };
         currentControlStructure.push(altStructure);
         controlStructures.push(altStructure);
@@ -76,7 +80,8 @@ function parseControlStructures(line, controlStructures, currentControlStructure
                 type: 'else', 
                 condition: elseCondition,
                 controlStructureId: generateGUID(), 
-                branch: 'else' 
+                branch: 'else',
+                messages: []
             };
             lastAlt.alternatives.push(elseStructure);
             currentControlStructure.push(elseStructure); 
@@ -87,7 +92,8 @@ function parseControlStructures(line, controlStructures, currentControlStructure
             type: 'opt', 
             condition: optCondition, 
             controlStructureId: generateGUID(), 
-            branch: 'main' 
+            branch: 'main',
+            messages: []
         };
         currentControlStructure.push(optStructure);
         controlStructures.push(optStructure);
@@ -160,6 +166,7 @@ function parseMessages(line, messages, participants, participantIndexMap, contro
         }
 
         const messageObj = {
+            messageId: generateGUID(),
             from: fromParticipant.name,
             to: toParticipant.name,
             message: message,
@@ -206,6 +213,16 @@ function handleControlStructureTransitions(line, controlStructureHistory, contro
     }
 }
 
+// Third pass: Add message IDs to the correct control structures
+function thirdPassAssignMessagesToControlStructures(jsonResult) {
+    jsonResult.messages.forEach(message => {
+        const controlStructure = jsonResult.controlStructures.find(cs => cs.controlStructureId === message.controlStructureId);
+        if (controlStructure) {
+            controlStructure.messages.push(message.messageId); // Only store the messageId, not the full message
+        }
+    });
+}
+
 // Main parsing function for sequence diagrams
 function parseSequenceDiagram(lines, jsonResult) {
     const participantIndexMap = {};
@@ -232,6 +249,9 @@ function parseSequenceDiagram(lines, jsonResult) {
 
     // Second pass: Assign messages to the correct control structure
     secondPassParseMessages(lines, jsonResult, participantIndexMap);
+
+    // Third pass: Associate message IDs with their control structures
+    thirdPassAssignMessagesToControlStructures(jsonResult);
 }
 
 module.exports = { parseSequenceDiagram };

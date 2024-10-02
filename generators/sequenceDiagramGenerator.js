@@ -1,5 +1,19 @@
 // generators/generateSequenceDiagram.js
 
+/*
+- draw the lifelines
+	- calculate the width of the beginning of first lifeline till the end of the second lifeline
+	- calculate the width of the beginning of second lifeline till the end of the third lifeline
+	- calculate the width of the beginning of third lifeline till the end of the fourth lifeline
+	- etc depending on the number of lifelines and store these values in a map with the first lifeline name as key
+- draw a message or a fragment which ever comes first
+	- the height of a message is always the same, and width is done by connecting it from and to 2 lifelines
+	- the height of a fragment is first determined by a header size and the amount of messages (plus one) in the fragment (including the alternative messages)
+	- the width (and the starting position on the X-axis) of a fragment is determined by the space between the most left lifeline and the most right lifeline of the messages in the fragment
+- between a message or a fragment which ever comes next, is always a small space (gap) over the Y-axis
+- messages in a fragment get set to the position on the Y-axis to the top of their fragment plus its header, so make sure a fragment height can accommodate that
+*/
+
 const { 
     createDiagram,
     createModel,
@@ -7,10 +21,21 @@ const {
     createPositionedDirectedModelAndView
 } = require('../umlFactory');
 
-let currentXPosition = 50;
-let currentYPosition = 140;
+const { positionTracker, dimensionCalculator } = require('../utils/utils');
+
+const FRAGMENT_HEADER_HEIGHT = 20;   // Height for the fragment header
+const MESSAGE_HEIGHT = 50;           // Fixed height for each message
+const SPACING_Y = 20;                // Space between messages or fragments on the Y-axis
+
+// Initialize position trackers and dimension calculator
+const lifelinePositionTracker = positionTracker({ x: 50, y: 20 }, 120, 0);  // X-axis increments for lifelines
+const messagePositionTracker = positionTracker({ x: 0, y: 140 }, 0, MESSAGE_HEIGHT + SPACING_Y); // Y-axis increments for messages
+const fragmentPositionTracker = positionTracker({ x: 0, y: 140 }, 0, FRAGMENT_HEADER_HEIGHT + SPACING_Y); // Y-axis increments for fragments
+const fragmentDimensionCalculator = dimensionCalculator(); // Track fragment dimensions
+
 const aliasMultiplier = 10;
-const lifelinePositionMap = {};
+const lifelinePositionMap = {}; // Store X positions of lifelines
+const lifelineWidthMap = {};    // Store the calculated widths between lifelines
 
 // Function to generate a Sequence Diagram
 function generateSequenceDiagram(project, parsedDiagram) {
@@ -41,11 +66,19 @@ function generateSequenceDiagram(project, parsedDiagram) {
 
     const lifelineViewMap = {};
 
-    // Create lifelines for each participant in the parsed diagram
+    // Step 1: Draw Lifelines and Calculate Widths
     parsedDiagram.participants.forEach((participant, index) => {
         const participantAlias = participant.alias || participant.name;
         const aliasWidth = participantAlias.length * aliasMultiplier;
-        const xPosition = currentXPosition + (index * 120); // Improved xPosition logic
+
+        // Get current X position for this lifeline
+        const { x: xPosition } = lifelinePositionTracker.getPosition();
+        
+        // Store the calculated width for this lifeline to the next
+        if (index > 0) {
+            const previousParticipant = parsedDiagram.participants[index - 1].name;
+            lifelineWidthMap[previousParticipant] = xPosition - lifelinePositionMap[previousParticipant].left;
+        }
 
         const lifelineView = createPositionedModelAndView({
             idType: "UMLLifeline",
@@ -60,102 +93,121 @@ function generateSequenceDiagram(project, parsedDiagram) {
             }
         });
 
-        lifelinePositionMap[participant.name] = {
-            left: xPosition,
-            top: currentYPosition
-        };
+        // Track the X position of the lifeline in lifelinePositionMap
+        lifelinePositionMap[participant.name] = { left: xPosition };
 
         lifelineViewMap[participant.name] = lifelineView;
-        currentXPosition += aliasWidth + 50;
+
+        // Increment the X position for the next lifeline
+        lifelinePositionTracker.incrementPosition(aliasWidth + 50, 0);
     });
 
-    // Handle control structures and messages
+    // Step 2: Handle control structures and messages
     handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap);
 }
 
-// Function to handle control structures and their associated messages
+// Step 3: Handle Messages and Fragments
 function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap) {
-    let currentYPosition = 140;
+    let index = 0;
 
-    while (parsedDiagram.messages.length > 0) {
-        const message = parsedDiagram.messages[0]; // Peek at the first message
+    while (index < parsedDiagram.messages.length) {
+        const message = parsedDiagram.messages[index];
 
         const controlStructure = findControlStructureBeforeMessage(
             message.controlStructureId, parsedDiagram.controlStructures);
 
         if (controlStructure) {
-            // Draw the combined fragment for the control structure
+            // Draw the fragment for the control structure
             drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
 
-            // Remove the control structure after it is used
+            // Remove the fragment after it is used, but do not remove the messages within
             parsedDiagram.controlStructures = parsedDiagram.controlStructures.filter(
                 cs => cs.controlStructureId !== controlStructure.controlStructureId);
-
         } else {
             // Draw the message
             drawMessage(sequenceDiagram, message, lifelineViewMap);
-
-            // Remove the message from the list after processing
-            parsedDiagram.messages.shift();
         }
 
-        currentYPosition += 50; // Adjusted vertical position increment
+        // Increment the Y position after each message or fragment
+        messagePositionTracker.incrementPosition(0, MESSAGE_HEIGHT + SPACING_Y);
+
+        index++; // Ensure that the last message is included
     }
 }
 
-// Function to draw a combined fragment for a control structure and handle its messages
+// Step 4: Draw a Fragment for a Control Structure
 function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
-    const x1 = 50;
-    const x2 = currentXPosition + 200;
-    const y1 = currentYPosition;
-    
-    // Get the messages associated with the fragment
+    // Get the current Y position for this fragment
+    const { y: fragmentYPosition } = fragmentPositionTracker.getPosition();
+
+    // Find the X positions of the lifelines involved in this fragment
+    const lifelinesInvolved = findMessagesByControlStructureId(controlStructure.controlStructureId, parsedDiagram.messages)
+        .reduce((acc, message) => {
+            if (!acc.includes(message.from)) acc.push(message.from);
+            if (!acc.includes(message.to)) acc.push(message.to);
+            return acc;
+        }, []);
+
+    const leftmostX = Math.min(...lifelinesInvolved.map(lifeline => lifelinePositionMap[lifeline].left));
+    const rightmostX = Math.max(...lifelinesInvolved.map(lifeline => lifelinePositionMap[lifeline].left));
+
+    // Get the messages associated with this control structure
     const relatedMessages = findMessagesByControlStructureId(controlStructure.controlStructureId, parsedDiagram.messages);
-    const fragmentHeight = relatedMessages.length * 50; // Assume each message takes up 50px in height
+
+    // Calculate fragment height based on the number of messages and the header
+    const fragmentHeight = FRAGMENT_HEADER_HEIGHT + (relatedMessages.length + 1) * MESSAGE_HEIGHT;
+
+    // Set the fragment dimensions using the fragmentDimensionCalculator
+    fragmentDimensionCalculator.setDimensions(leftmostX, fragmentYPosition, rightmostX, fragmentYPosition + fragmentHeight);
 
     // Create the combined fragment view
     const combinedFragment = createPositionedModelAndView({
         idType: "UMLCombinedFragment",
         parent: sequenceDiagram._parent,
         diagram: sequenceDiagram,
-        x1: x1,
-        y1: y1,
-        x2: x2,
-        y2: y1 + fragmentHeight + 100,  // Add margin for fragment header
+        x1: fragmentDimensionCalculator.getDimensions().x1,
+        y1: fragmentDimensionCalculator.getDimensions().y1,
+        x2: fragmentDimensionCalculator.getDimensions().x2,
+        y2: fragmentDimensionCalculator.getDimensions().y2,
         dictionary: {
             name: controlStructure.type,
             condition: controlStructure.condition
         }
     });
 
-    currentYPosition += 50;  // Move Y position down after fragment header
+    // Calculate the space between messages inside the fragment
+    const messageSpacing = (fragmentHeight - FRAGMENT_HEADER_HEIGHT) / relatedMessages.length;
 
-    // Draw the messages in the correct order inside the fragment
-    relatedMessages.forEach(message => {
-        drawMessage(sequenceDiagram, message, lifelineViewMap);
+    // Draw messages inside the fragment, evenly spaced
+    relatedMessages.forEach((message, index) => {
+        const messageYPosition = fragmentYPosition + FRAGMENT_HEADER_HEIGHT + index * MESSAGE_HEIGHT;
+        drawMessage(sequenceDiagram, message, lifelineViewMap, messageYPosition);
         parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
-        currentYPosition += 50;
     });
 
-    currentYPosition += 50; // Adjust Y after fragment processing
+    // Increment fragment position for the next fragment
+    fragmentPositionTracker.incrementPosition(0, fragmentHeight + SPACING_Y);
 }
 
-// Function to draw a message
-function drawMessage(sequenceDiagram, message, lifelineViewMap) {
+// Step 5: Draw a Message
+function drawMessage(sequenceDiagram, message, lifelineViewMap, messageYPosition = null) {
     const fromLifeline = lifelineViewMap[message.from];
     const toLifeline = lifelineViewMap[message.to];
 
     const fromX = lifelinePositionMap[message.from].left;
     const toX = lifelinePositionMap[message.to].left;
 
+    // Use the provided Y position or the current message position
+    const yPos = messageYPosition || messagePositionTracker.getPosition().y;
+
     createPositionedDirectedModelAndView({
         idType: "UMLMessage",
         parent: sequenceDiagram._parent,
         diagram: sequenceDiagram,
         x1: fromX,
-        y1: currentYPosition,
+        y1: yPos,
         x2: toX,
-        y2: currentYPosition,
+        y2: yPos,
         from: fromLifeline,
         to: toLifeline,
         dictionary: {
