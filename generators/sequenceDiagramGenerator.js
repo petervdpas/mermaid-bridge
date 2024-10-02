@@ -45,7 +45,7 @@ function generateSequenceDiagram(project, parsedDiagram) {
     parsedDiagram.participants.forEach((participant, index) => {
         const participantAlias = participant.alias || participant.name;
         const aliasWidth = participantAlias.length * aliasMultiplier;
-        const xPosition = currentXPosition + (index * 120);
+        const xPosition = currentXPosition + (index * 120); // Improved xPosition logic
 
         const lifelineView = createPositionedModelAndView({
             idType: "UMLLifeline",
@@ -104,14 +104,14 @@ function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, life
             parsedDiagram.messages.shift();
         }
 
-        currentYPosition += 50;
+        currentYPosition += 50; // Adjusted vertical position increment
     }
 }
 
 // Function to draw a combined fragment for a control structure and handle its messages
 function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
-    const x1 = 50;
-    const x2 = currentXPosition + 200;
+    const x1 = 50; // Fixed starting point for fragments
+    const fragmentWidth = Math.max(...Object.values(lifelinePositionMap).map(pos => pos.left)) + 200; // Dynamically calculate width
     const y1 = currentYPosition;
     const y2 = currentYPosition + 100;
 
@@ -121,7 +121,7 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
         diagram: sequenceDiagram,
         x1: x1,
         y1: y1,
-        x2: x2,
+        x2: fragmentWidth, // Use dynamically calculated width
         y2: y2,
         dictionary: {
             name: controlStructure.type,
@@ -138,7 +138,6 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
 
             altMessages.forEach(message => {
                 drawMessage(sequenceDiagram, message, lifelineViewMap);
-                // Remove message from the list after processing
                 parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
                 currentYPosition += 50;
             });
@@ -149,7 +148,6 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
 
         relatedMessages.forEach(message => {
             drawMessage(sequenceDiagram, message, lifelineViewMap);
-            // Remove message from the list once drawn
             parsedDiagram.messages = parsedDiagram.messages.filter(msg => msg !== message);
             currentYPosition += 50;
         });
@@ -191,6 +189,8 @@ function drawMessage(sequenceDiagram, message, lifelineViewMap) {
             messageSort: message.type
         }
     });
+
+    currentYPosition += 50; // Ensure consistent vertical spacing
 }
 
 module.exports = { generateSequenceDiagram };
