@@ -71,8 +71,10 @@ function parseControlStructures(line, controlStructures, currentControlStructure
     } else if (elsePattern.test(line)) {
         const lastAlt = currentControlStructure[currentControlStructure.length - 1];
         if (lastAlt && lastAlt.type === 'alt') {
+            const elseCondition = line.match(elsePattern)[1]
             const elseStructure = { 
                 type: 'else', 
+                condition: elseCondition,
                 controlStructureId: generateGUID(), 
                 branch: 'else' 
             };
