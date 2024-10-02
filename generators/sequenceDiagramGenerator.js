@@ -14,7 +14,6 @@ const lifelinePositionMap = {};
 
 // Function to generate a Sequence Diagram
 function generateSequenceDiagram(project, parsedDiagram) {
-
     const importSequenceModel = createModel({
         idType: "UMLModel",
         parent: project,
@@ -40,15 +39,12 @@ function generateSequenceDiagram(project, parsedDiagram) {
         defaultDiagram: true
     });
 
-    // Step 2: Create Lifelines and Messages
     const lifelineViewMap = {};
 
     // Create lifelines for each participant in the parsed diagram
     parsedDiagram.participants.forEach((participant, index) => {
-
-        var participantAlias = participant.alias || participant.name;
+        const participantAlias = participant.alias || participant.name;
         const aliasWidth = participantAlias.length * aliasMultiplier;
-
         const xPosition = currentXPosition + (index * 120);
 
         const lifelineView = createPositionedModelAndView({
@@ -64,22 +60,25 @@ function generateSequenceDiagram(project, parsedDiagram) {
             }
         });
 
-        // Store the lifeline position for later use in messages
         lifelinePositionMap[participant.name] = {
-            left: xPosition,  // Store X position
-            top: currentYPosition // Start messages below the lifeline
+            left: xPosition,
+            top: currentYPosition
         };
 
-        // Rename the associated role created with the lifeline
         const role = lifelineView.model.represent;
         if (role) {
-            role.name = participant.name;  // Rename the role to the participant's name
+            role.name = participant.name;
         }
 
         lifelineViewMap[participant.name] = lifelineView;
-
         currentXPosition += aliasWidth + 50;
     });
+
+    // Handle control structures and messages
+    handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap);
+}
+
+function  handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap) {
 
     // Create messages between lifelines
     parsedDiagram.messages.forEach((message, index) => {
