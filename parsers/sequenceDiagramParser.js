@@ -1,6 +1,6 @@
 // parsers/sequenceDiagramParser.js
 
-const { sequenceDiagramArrows } = require('../utils/utils');
+const { sequenceDiagramArrows, generateGUID } = require('../utils/utils');
 
 function parseParticipantsAndActors(line, participants, participantIndexMap) {
     const participantPattern = /^participant\s+(\w+)(?:\s+as\s+(\w+))?/;
@@ -28,52 +28,6 @@ function parseParticipantsAndActors(line, participants, participantIndexMap) {
     }
 }
 
-// Helper function to parse messages using sequenceDiagramArrows
-function parseMessages(line, messages, participants, participantIndexMap, currentControlStructure) {
-    const messagePattern = /^(\w+)\s*([<]{0,2}-{1,2}>>?|<-->|-{1,2}x|-)>\s*(\w+)\s*:\s*(.+)$/;
-    const match = line.match(messagePattern);
-
-    if (match) {
-        const [_, from, arrow, to, message] = match;
-        const fromIndex = participantIndexMap[from];
-        const toIndex = participantIndexMap[to];
-
-        const fromParticipant = participants[fromIndex];
-        const toParticipant = participants[toIndex];
-
-        let messageSort = 'synchCall';
-        let direction = 'forward';
-
-        const arrowType = sequenceDiagramArrows.arrows.find(entry => entry.pattern === arrow);
-        if (arrowType) {
-            messageSort = arrowType.type;
-        }
-
-        if (toIndex < fromIndex) {
-            messageSort = 'reply';
-            direction = 'backward';
-        }
-
-        // Assign control structure index based on the active control structure
-        let controlStructureIndex = null;
-        if (currentControlStructure.length > 0) {
-            const lastControlStructure = currentControlStructure[currentControlStructure.length - 1];
-            controlStructureIndex = lastControlStructure.controlStructureIndex;  // Use explicit index
-        }
-
-        const messageObj = {
-            from: fromParticipant.name,
-            to: toParticipant.name,
-            message: message,
-            type: messageSort,
-            direction: direction,
-            controlStructureIndex: controlStructureIndex // Store index instead of null
-        };
-
-        messages.push(messageObj);
-    }
-}
-
 // Helper function to parse control structures
 function parseControlStructures(line, controlStructures, currentControlStructure) {
     const loopPattern = /^loop\s+(.+)/;
@@ -85,41 +39,64 @@ function parseControlStructures(line, controlStructures, currentControlStructure
 
     if (loopPattern.test(line)) {
         const loopCondition = line.match(loopPattern)[1];
-        const loopStructure = { type: 'loop', condition: loopCondition, messages: [], controlStructureIndex: controlStructures.length };
+        const loopStructure = { 
+            type: 'loop', 
+            condition: loopCondition, 
+            controlStructureId: generateGUID(), // Assign unique GUID
+            branch: 'main' 
+        };
         currentControlStructure.push(loopStructure);
         controlStructures.push(loopStructure);
     } else if (breakPattern.test(line)) {
         const breakCondition = line.match(breakPattern)[1];
-        const breakStructure = { type: 'break', condition: breakCondition, messages: [], controlStructureIndex: controlStructures.length };
+        const breakStructure = { 
+            type: 'break', 
+            condition: breakCondition, 
+            controlStructureId: generateGUID(), // Assign unique GUID
+            branch: 'main' 
+        };
         currentControlStructure.push(breakStructure);
         controlStructures.push(breakStructure);
     } else if (altPattern.test(line)) {
         const altCondition = line.match(altPattern)[1];
-        const altStructure = { type: 'alt', condition: altCondition, messages: [], alternatives: [], controlStructureIndex: controlStructures.length };
+        const altStructure = { 
+            type: 'alt', 
+            condition: altCondition, 
+            alternatives: [], 
+            controlStructureId: generateGUID(), // Assign unique GUID for alt
+            branch: 'alt' 
+        };
         currentControlStructure.push(altStructure);
         controlStructures.push(altStructure);
     } else if (elsePattern.test(line)) {
         const lastAlt = currentControlStructure[currentControlStructure.length - 1];
         if (lastAlt && lastAlt.type === 'alt') {
-            const elseStructure = { type: 'else', messages: [], controlStructureIndex: controlStructures.length };
+            const elseStructure = { 
+                type: 'else', 
+                controlStructureId: generateGUID(), // Assign a separate GUID for else
+                branch: 'else' 
+            };
             lastAlt.alternatives.push(elseStructure);
+            currentControlStructure.push(elseStructure); // Push the else structure for further message tracking
         }
     } else if (optPattern.test(line)) {
         const optCondition = line.match(optPattern)[1];
-        const optStructure = { type: 'opt', condition: optCondition, messages: [], controlStructureIndex: controlStructures.length };
+        const optStructure = { 
+            type: 'opt', 
+            condition: optCondition, 
+            controlStructureId: generateGUID(), // Assign unique GUID for opt
+            branch: 'main' 
+        };
         currentControlStructure.push(optStructure);
         controlStructures.push(optStructure);
     } else if (endPattern.test(line)) {
-        const finishedStructure = currentControlStructure.pop();
-        if (currentControlStructure.length > 0) {
-            currentControlStructure[currentControlStructure.length - 1].messages.push(finishedStructure);
-        }
+        // End the most recent control structure
+        currentControlStructure.pop();
     }
 }
 
 // Function to parse and handle specific lines (notes, activations, deactivations)
 function parseSpecialLines(line, jsonResult) {
-    // Patterns for notes, activations, and deactivations
     const notePattern = /^note\s+(left|right)\s+of\s+(\w+):\s*(.+)$/i;
     const activatePattern = /^activate\s+(\w+)/i;
     const deactivatePattern = /^deactivate\s+(\w+)/i;
@@ -149,6 +126,89 @@ function parseSpecialLines(line, jsonResult) {
     return false; // If it's not a special line, return false
 }
 
+// Helper function to parse messages and assign to control structures
+function parseMessages(line, messages, participants, participantIndexMap, currentControlStructure) {
+    const messagePattern = /^(\w+)\s*([<]{0,2}-{1,2}>>?|<-->|-{1,2}x|-)>\s*(\w+)\s*:\s*(.+)$/;
+    const match = line.match(messagePattern);
+
+    if (match) {
+        const [_, from, arrow, to, message] = match;
+        const fromIndex = participantIndexMap[from];
+        const toIndex = participantIndexMap[to];
+
+        const fromParticipant = participants[fromIndex];
+        const toParticipant = participants[toIndex];
+
+        let messageSort = 'synchCall';
+        let direction = 'forward';
+
+        const arrowType = sequenceDiagramArrows.arrows.find(entry => entry.pattern === arrow);
+        if (arrowType) {
+            messageSort = arrowType.type;
+        }
+
+        if (toIndex < fromIndex) {
+            messageSort = 'reply';
+            direction = 'backward';
+        }
+
+        // Assign the message to the nearest control structure by GUID
+        let controlStructureId = null;
+        if (currentControlStructure.length > 0) {
+            const currentStructure = currentControlStructure[currentControlStructure.length - 1];
+            controlStructureId = currentStructure.controlStructureId;  // Assign the GUID
+        }
+
+        const messageObj = {
+            from: fromParticipant.name,
+            to: toParticipant.name,
+            message: message,
+            type: messageSort,
+            direction: direction,
+            controlStructureId: controlStructureId // Use the GUID for reference
+        };
+
+        messages.push(messageObj);
+    }
+}
+
+// Second pass: Track control structure state while parsing messages
+function secondPassParseMessages(lines, jsonResult, participantIndexMap) {
+    const controlStructureHistory = [];
+
+    lines.forEach(line => {
+        if (/^(loop|alt|opt|break|else|end)/.test(line)) {
+            handleControlStructureTransitions(line, controlStructureHistory, jsonResult.controlStructures);
+        } else {
+            parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap, controlStructureHistory);
+        }
+    });
+}
+
+// Helper function to handle control structure state during the second pass
+function handleControlStructureTransitions(line, controlStructureHistory, controlStructures) {
+    const endPattern = /^end/;
+    const elsePattern = /^else/;
+
+    // Handle closing control structures
+    if (endPattern.test(line)) {
+        controlStructureHistory.pop(); // Close the most recent control structure
+    } else if (elsePattern.test(line)) {
+        // Find the last alt and switch to its else branch
+        const lastAlt = controlStructureHistory[controlStructureHistory.length - 1];
+        if (lastAlt && lastAlt.type === 'alt') {
+            const elseBranch = lastAlt.alternatives.find(branch => branch.type === 'else');
+            controlStructureHistory.push(elseBranch);
+        }
+    } else {
+        // Find the corresponding control structure and push it to the history stack
+        const controlStructure = controlStructures.find(cs => line.includes(cs.condition));
+        if (controlStructure) {
+            controlStructureHistory.push(controlStructure);
+        }
+    }
+}
+
 // Main parsing function for sequence diagrams
 function parseSequenceDiagram(lines, jsonResult) {
     const participantIndexMap = {};
@@ -160,21 +220,21 @@ function parseSequenceDiagram(lines, jsonResult) {
 
     const currentControlStructureStack = [];
 
+    // First pass: Parse participants, control structures, and special lines (notes, activations, etc.)
     lines.forEach(line => {
-        // Skip and parse special lines (notes, activations, deactivations)
         if (parseSpecialLines(line, jsonResult)) {
             return; // Skip to the next line if it's a special line
         }
 
-        // Parse participants, actors, control structures, and messages
         parseParticipantsAndActors(line, jsonResult.participants, participantIndexMap);
 
         if (/^(loop|alt|opt|break|else|end)/.test(line)) {
             parseControlStructures(line, jsonResult.controlStructures, currentControlStructureStack);
-        } else {
-            parseMessages(line, jsonResult.messages, jsonResult.participants, participantIndexMap, currentControlStructureStack);
         }
     });
+
+    // Second pass: Track control structure and assign messages to the correct branches
+    secondPassParseMessages(lines, jsonResult, participantIndexMap);
 }
 
 module.exports = { parseSequenceDiagram };
