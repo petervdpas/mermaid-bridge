@@ -215,10 +215,33 @@ function handleControlStructureTransitions(line, controlStructureHistory, contro
 
 // Third pass: Add message IDs to the correct control structures
 function thirdPassAssignMessagesToControlStructures(jsonResult) {
-    jsonResult.messages.forEach(message => {
-        const controlStructure = jsonResult.controlStructures.find(cs => cs.controlStructureId === message.controlStructureId);
-        if (controlStructure) {
-            controlStructure.messages.push(message.messageId); // Only store the messageId, not the full message
+    const messages = jsonResult.messages;
+
+    jsonResult.controlStructures.forEach(controlStructure => {
+        if (controlStructure.type === 'alt') {
+            // Handle alt and its alternatives (e.g., else)
+            // Assign messages to the alt structure
+            messages.forEach(message => {
+                if (message.controlStructureId === controlStructure.controlStructureId) {
+                    controlStructure.messages.push(message.messageId);
+                }
+
+                // Now handle alternatives within the alt (e.g., else)
+                if (controlStructure.alternatives && Array.isArray(controlStructure.alternatives)) {
+                    controlStructure.alternatives.forEach(altBranch => {
+                        if (message.controlStructureId === altBranch.controlStructureId) {
+                            altBranch.messages.push(message.messageId); // Push to the correct alternative branch
+                        }
+                    });
+                }
+            });
+        } else {
+            // For non-alt control structures, just assign messages as usual
+            messages.forEach(message => {
+                if (message.controlStructureId === controlStructure.controlStructureId) {
+                    controlStructure.messages.push(message.messageId);
+                }
+            });
         }
     });
 }

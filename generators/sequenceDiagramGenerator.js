@@ -14,24 +14,24 @@
 - messages in a fragment get set to the position on the Y-axis to the top of their fragment plus its header, so make sure a fragment height can accommodate that
 */
 
-const { 
-    positionTracker, 
-    dimensionCalculator 
-} = require('../utils/utils');
+const { positionTracker } = require('../utils/utils');
 const {
     createDiagram,
     createModel,
     createPositionedModelAndView,
+    createPositionedDirectedModelAndView
 } = require('../umlFactory');
 
 const LIFELINE_MARGIN = 80;
 const LIFELINE_NAME_MARGIN = 10;
+const MESSAGE_HEIGHT = 50;
 
 const lifelinePositionMap = {};
 const lifelineViewMap = {};
 
 // Initialize position and dimension trackers
 const lifelinePositionTracker = positionTracker({ x: 50, y: 120 });
+const messagePositionTracker = positionTracker({ x: 0, y: 150 }, 0, MESSAGE_HEIGHT);
 
 // Function to generate a Sequence Diagram
 function generateSequenceDiagram(project, parsedDiagram) {
@@ -90,6 +90,8 @@ function generateSequenceDiagram(project, parsedDiagram) {
         lifelinePositionTracker.incrementPosition(accumulatedMargin, 0);
     });
 
+    console.log(lifelinePositionMap);
+
     // Handle control structures and messages
     handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap);
 }
@@ -97,7 +99,49 @@ function generateSequenceDiagram(project, parsedDiagram) {
 
 // Function to handle control structures and their associated messages
 function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap) {
- 
+
+    while (parsedDiagram.messages.length > 0) {
+        const message = parsedDiagram.messages[0];
+
+        if (message.controlStructureId) {
+            const controlStructure = parsedDiagram.controlStructures.find(
+                cs => cs.controlStructureId === message.controlStructureId);
+
+            console.log(controlStructure);
+            //drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram, globalYPosition);
+        } else {
+            const { yPos } = messagePositionTracker.getPosition();
+            drawMessage(sequenceDiagram, message, lifelineViewMap, yPos);
+            messagePositionTracker.incrementPosition(0, MESSAGE_HEIGHT);
+        }
+
+        parsedDiagram.messages.shift();
+    }
+}
+
+// Function to draw a message
+function drawMessage(sequenceDiagram, message, lifelineViewMap, yPos) {
+    const fromLifeline = lifelineViewMap[message.from];
+    const toLifeline = lifelineViewMap[message.to];
+
+    const fromX = lifelinePositionMap[message.from].left;
+    const toX = lifelinePositionMap[message.to].left;
+
+    createPositionedDirectedModelAndView({
+        idType: "UMLMessage",
+        parent: sequenceDiagram._parent,
+        diagram: sequenceDiagram,
+        x1: fromX,
+        y1: yPos,
+        x2: toX,
+        y2: yPos,
+        from: fromLifeline,
+        to: toLifeline,
+        dictionary: {
+            name: message.message,
+            messageSort: message.type
+        }
+    });
 }
 
 module.exports = { generateSequenceDiagram };
