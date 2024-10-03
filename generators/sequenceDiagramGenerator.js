@@ -106,11 +106,7 @@ function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, life
             cs => cs.controlStructureId === message.controlStructureId);
 
         if (controlStructure) {
-            // remeber the original position 
             drawControlStructure(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
-            // Draw messages for this control structure
-            // drawMessages(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
-
             removeControlStructure(parsedDiagram, controlStructure.controlStructureId);
         } else {
             drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram);
@@ -151,11 +147,10 @@ function drawControlStructure(sequenceDiagram, controlStructure, lifelineViewMap
     // Calculate the height of the fragment
     const fragmentHeight = calculateFragmentHeight(controlStructure);
 
-    const { mostLeft, mostRight } = { mostLeft: 20, mostRight: 500 }; // Dummy X positions for now
+    const { mostLeft, mostRight } = getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap, parsedDiagram);
+    
     const yPos1 = originalYPos + CONTROL_STRUCTURE_GAP;
     const yPos2 = yPos1 + fragmentHeight;
-
-    console.log(`Drawing fragment from Y: ${yPos1} to Y: ${yPos2}`);
 
     const combinedFragment = createPositionedModelAndView({
         idType: "UMLCombinedFragment",
@@ -263,6 +258,11 @@ function extendLifelineHeight(lifeline, yPos) {
     if (yPos > lifelineY2) {
         app.engine.setProperty(lifeline, 'height', yPos);
     }
+}
+
+function getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap, parsedDiagram) {
+
+    return { mostLeft: 20, mostRight: 500 }; // Dummy X positions for now
 }
 
 module.exports = { generateSequenceDiagram };
