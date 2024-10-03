@@ -24,7 +24,9 @@ const {
 
 const LIFELINE_MARGIN = 80;
 const LIFELINE_NAME_MARGIN = 10;
-const MESSAGE_HEIGHT = 50;
+const MESSAGE_HEIGHT = 60;
+const CONTROL_STRUCTURE_HEADER_HEIGHT = 40;
+const CONTROL_STRUCTURE_GAP = 20; 
 
 const lifelinePositionMap = {};
 const lifelineViewMap = {};
@@ -100,18 +102,15 @@ function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, life
     while (parsedDiagram.messages.length > 0) {
         const message = parsedDiagram.messages[0];
 
-        if (message.controlStructureId) {
-            const controlStructure = parsedDiagram.controlStructures.find(
-                cs => cs.controlStructureId === message.controlStructureId);
+        const controlStructure = parsedDiagram.controlStructures.find(
+            cs => cs.controlStructureId === message.controlStructureId);
 
-            if (controlStructure) {
-                // Draw messages for this control structure
-                drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
-            }
+        if (controlStructure) {
+            // Draw messages for this control structure
+            drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
         } else {
+            drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram);
             
-            drawMessage(sequenceDiagram, message, lifelineViewMap, messagePostionTrackerUpdate());
-            removeMessageById(parsedDiagram, message.messageId);
         }
     }
 }
@@ -122,9 +121,7 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
     controlStructure.messages.forEach((messageId) => {
         const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
         if (message) {
-            
-            drawMessage(sequenceDiagram, message, lifelineViewMap, messagePostionTrackerUpdate());
-            removeMessageById(parsedDiagram, messageId);
+            drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram);
         }
     });
 
@@ -134,8 +131,7 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
             elseBranch.messages.forEach((messageId) => {
                 const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
                 if (message) {
-                    drawMessage(sequenceDiagram, message, lifelineViewMap, messagePostionTrackerUpdate());
-                    removeMessageById(parsedDiagram, messageId);
+                    drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram);
                 }
             });
         });
@@ -143,12 +139,21 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
 }
 
 // Function to draw a message
-function drawMessage(sequenceDiagram, message, lifelineViewMap, yPos) {
+function drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram) {
+
+    const { yPos } = messagePostionTrackerUpdate();
+
+    console.log("Msg: " + message.messageId + " is printed at " + yPos);
+
     const fromLifeline = lifelineViewMap[message.from];
     const toLifeline = lifelineViewMap[message.to];
 
     const fromX = lifelinePositionMap[message.from].left;
     const toX = lifelinePositionMap[message.to].left;
+
+    // Extend lifelines if necessary
+    extendLifelineHeight(fromLifeline, yPos);
+    extendLifelineHeight(toLifeline, yPos);
 
     createPositionedDirectedModelAndView({
         idType: "UMLMessage",
@@ -165,6 +170,8 @@ function drawMessage(sequenceDiagram, message, lifelineViewMap, yPos) {
             messageSort: message.type
         }
     });
+
+    removeMessageById(parsedDiagram, message.messageId);
 }
 
 // Function to remove a message from parsedDiagram.messages by messageId
@@ -175,10 +182,19 @@ function removeMessageById(parsedDiagram, messageId) {
     }
 }
 
+// Function to update the position tracker for messages
 function messagePostionTrackerUpdate() {
     messagePositionTracker.incrementPosition(0, MESSAGE_HEIGHT);
-    const { yPos } = messagePositionTracker.getPosition();
-    return yPos;
+    return messagePositionTracker.getPosition();
+}
+
+// Helper function to extend a lifeline if the Y position exceeds its current height
+function extendLifelineHeight(lifeline, yPos) {
+    const lifelineY2 = lifeline.height;
+
+    if (yPos > lifelineY2) {
+        app.engine.setProperty(lifeline, 'height', yPos);
+    }
 }
 
 module.exports = { generateSequenceDiagram };
