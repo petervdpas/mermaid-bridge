@@ -138,6 +138,31 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
     }
 }
 
+// Function to draw a combined fragment (e.g., alt, opt, break)
+function drawFragment(sequenceDiagram, controlStructure, lifelineViewMap) {
+
+    const { xPos1, xPos2 }= getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap);
+    const yPos1 = messagePositionTracker.getPosition().yPos;
+    const yPos2 = yPos1 + calculateFragmentHeight(controlStructure);  // Height is based on the number of messages
+
+    const combinedFragment = createPositionedModelAndView({
+        idType: "UMLCombinedFragment",
+        parent: sequenceDiagram._parent,
+        diagram: sequenceDiagram,
+        x1: xPos1,
+        y1: yPos1,
+        x2: xPos2,
+        y2: yPos2,
+        dictionary: {
+            name: controlStructure.type,
+            condition: controlStructure.condition
+        }
+    });
+
+    // Update position for further elements
+    messagePositionTracker.incrementPosition(0, yPos2 - yPos1 + CONTROL_STRUCTURE_GAP);
+}
+
 // Function to draw a message
 function drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram) {
 
@@ -195,6 +220,35 @@ function extendLifelineHeight(lifeline, yPos) {
     if (yPos > lifelineY2) {
         app.engine.setProperty(lifeline, 'height', yPos);
     }
+}
+
+// Get the horizontal boundary of the lifelines involved in a control structure
+function getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap) {
+    let mostLeft = Infinity;
+    let mostRight = -Infinity;
+
+    controlStructure.messages.forEach(messageId => {
+        const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
+        if (message) {
+            // Calculate the left and right bounds of the 'from' and 'to' lifelines
+            const fromLifelineLeft = lifelineViewMap[message.from].left;
+            const fromLifelineRight = lifelineViewMap[message.from].right || fromLifelineLeft; // Use right if available
+            const toLifelineLeft = lifelineViewMap[message.to].left;
+            const toLifelineRight = lifelineViewMap[message.to].right || toLifelineLeft; // Use right if available
+
+            // Update mostLeft and mostRight accordingly
+            mostLeft = Math.min(mostLeft, fromLifelineLeft, toLifelineLeft);
+            mostRight = Math.max(mostRight, fromLifelineRight, toLifelineRight);
+        }
+    });
+
+    return { mostLeft, mostRight };
+}
+
+// Helper function to calculate the height of the fragment based on the number of messages
+function calculateFragmentHeight(controlStructure) {
+    const messageCount = controlStructure.messages.length;
+    return CONTROL_STRUCTURE_HEADER_HEIGHT + (messageCount * MESSAGE_HEIGHT);
 }
 
 module.exports = { generateSequenceDiagram };
