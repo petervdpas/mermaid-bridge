@@ -3,9 +3,13 @@
 const {
     createDiagram,
     createModel,
-    createModelAndView,
+    createDirectedModelAndView,
+    createPositionedModelAndView,
     addClassElement
 } = require('../umlFactory');
+
+const CLASS_WIDTH = 100;
+const CLASS_HEIGHT = 50;
 
 // Function to create relationships between UML elements
 function createClassRelationship(relation, fromView, toView, diagram) {
@@ -32,20 +36,16 @@ function createClassRelationship(relation, fromView, toView, diagram) {
         return;
     }
 
-    const options = {
-        id: elemType,
+    const relationView = createDirectedModelAndView({
+        idType: elemType,
         parent: diagram._parent,
         diagram: diagram,
-        tailView: fromView,
-        headView: toView,
-        tailModel: fromView.model,
-        headModel: toView.model,
-        modelInitializer: function (elem) {
-            elem.name = relation.label || ''; // Set the relationship label
+        from: fromView,
+        to: toView,
+        dictionary: {
+            name: relation.label || '' // Set the relationship label
         }
-    };
-
-    const relationView = app.factory.createModelAndView(options);
+    });
 
     switch (relation.type) {
         case 'directedAssociation':
@@ -81,13 +81,25 @@ function generateClassDiagram(project, parsedDiagram) {
     });
 
     const classViewMap = {};
+    let xPos = 100;
+    let yPos = 100;
+    const xGap = CLASS_WIDTH * 2;
+    const yGap = CLASS_HEIGHT * 2;
 
     // Create UML classes and add attributes/methods
-    parsedDiagram.classes.forEach(cls => {
-        const newClass = createModelAndView({
+    parsedDiagram.classes.forEach((cls, index) => {
+
+        xPos = 100 + (index % 3) * xGap; // Move horizontally
+        yPos = 100 + Math.floor(index / 3) * yGap; // Move vertically every 3 classes
+
+        const newClass = createPositionedModelAndView({
             idType: "UMLClass",
             parent: classDiagram._parent,
             diagram: classDiagram,
+            x1: xPos,
+            y1: yPos,
+            x2: xPos + CLASS_WIDTH,
+            y2: yPos + CLASS_HEIGHT,
             dictionary: {
                 name: cls.name
             }
@@ -110,6 +122,7 @@ function generateClassDiagram(project, parsedDiagram) {
         const toView = classViewMap[rel.to];
         createClassRelationship(rel, fromView, toView, classDiagram);
     });
+
 }
 
 module.exports = { generateClassDiagram };

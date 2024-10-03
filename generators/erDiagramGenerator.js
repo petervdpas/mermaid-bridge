@@ -3,9 +3,13 @@
 const { 
     createDiagram,
     createModel,
-    createModelAndView,
+    createPositionedModelAndView,
+    createDirectedModelAndView,
     addERDElement
 } = require('../umlFactory');
+
+const ENTITY_WIDTH = 80;
+const ENTITY_HEIGHT = 40;
 
 // Function to create relationships between ERD entities
 function createERDRelationship(relation, fromView, toView, diagram) {
@@ -15,21 +19,17 @@ function createERDRelationship(relation, fromView, toView, diagram) {
         return;
     }
 
-    const options = {
-        id: "ERDRelationship",  // General association for now
+    const relationView = createDirectedModelAndView({
+        idType: "ERDRelationship",
         parent: diagram._parent,
         diagram: diagram,
-        tailView: fromView,
-        headView: toView,
-        tailModel: fromView.model,
-        headModel: toView.model,
-        modelInitializer: function (elem) {
-            elem.name = relation.label || ''; // Set the relationship label
-            elem.identifying = !relation.weak; // Strong relationships are identifying
+        from: fromView,
+        to: toView,
+        dictionary: {
+            name: relation.label || '',
+            identifying: !relation.weak
         }
-    };
-
-    const relationView = app.factory.createModelAndView(options);
+    });
 
     // Assign multiplicity based on the fromType and toType
     relationView.model.end1.cardinality = getMultiplicity(relation.fromType);
@@ -69,13 +69,25 @@ function generateERDiagram(project, parsedDiagram) {
     });
 
     const entityViewMap = {};
+    let xPos = 100;
+    let yPos = 100;
+    const xGap = ENTITY_WIDTH * 2;
+    const yGap = ENTITY_HEIGHT * 2;
 
     // Create ERD entities and add fields
-    parsedDiagram.entities.forEach(entity => {
-        const newEntity = createModelAndView({
+    parsedDiagram.entities.forEach((entity, index) => {
+
+        xPos = ENTITY_WIDTH + (index % 3) * xGap;
+        yPos = ENTITY_HEIGHT + Math.floor(index / 3) * yGap;
+
+        const newEntity = createPositionedModelAndView({
             idType: "ERDEntity",
             parent: erDiagram._parent,
             diagram: erDiagram,
+            x1: xPos,
+            y1: yPos,
+            x2: xPos + ENTITY_WIDTH,
+            y2: yPos + ENTITY_HEIGHT,
             dictionary: {
                 name: entity.name
             }

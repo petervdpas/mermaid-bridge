@@ -39,6 +39,23 @@ function createModelAndView({ idType, parent, diagram, dictionary = {} }) {
     });
 }
 
+function createDirectedModelAndView({ idType, parent, diagram, from, to, dictionary = {} }) {
+    return app.factory.createModelAndView({
+        id: idType,  // e.g., "UMLClass" or "ERDEntity"
+        parent: parent,
+        diagram: diagram,
+        tailView: from,
+        headView: to,
+        tailModel: from.model,
+        headModel: to.model,
+        modelInitializer: function (elem) {
+            Object.entries(dictionary).forEach(([key, value]) => {
+                elem[key] = value;
+            });
+        }
+    });
+}
+
 // Generic function to create a model and view with a position, allowing one or many key-value pairs
 function createPositionedModelAndView({ idType, parent, diagram, x1, y1, x2, y2, dictionary = {} }) {
     return app.factory.createModelAndView({
@@ -119,6 +136,7 @@ module.exports = {
     createDiagram,
     createModel,
     createModelAndView,
+    createDirectedModelAndView,
     createPositionedModelAndView,
     createPositionedDirectedModelAndView,
     addClassElement,
