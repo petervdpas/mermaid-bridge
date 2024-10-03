@@ -182,6 +182,11 @@ function positionTracker(initialPosition = { xPos: 0, yPos: 0 }, xAdder = 1, yAd
             position.yPos += deltaY;
         },
 
+        decrementPosition: function(deltaX = xAdder, deltaY = yAdder) {
+            position.xPos -= deltaX;
+            position.yPos -= deltaY;
+        },
+
         // Set the position to a specific xPos and yPos
         setPosition: function(newPosition) {
             if (newPosition && typeof newPosition.xPos === 'number' && typeof newPosition.yPos === 'number') {

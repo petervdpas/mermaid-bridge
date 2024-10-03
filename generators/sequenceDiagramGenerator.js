@@ -24,8 +24,8 @@ const {
 
 const LIFELINE_MARGIN = 80;
 const LIFELINE_NAME_MARGIN = 10;
-const MESSAGE_HEIGHT = 60;
-const CONTROL_STRUCTURE_HEADER_HEIGHT = 40;
+const MESSAGE_HEIGHT = 50;
+const CONTROL_STRUCTURE_HEADER_HEIGHT = 10;
 const CONTROL_STRUCTURE_GAP = 20; 
 
 const lifelinePositionMap = {};
@@ -106,18 +106,22 @@ function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, life
             cs => cs.controlStructureId === message.controlStructureId);
 
         if (controlStructure) {
+            // remeber the original position 
+            drawControlStructure(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
             // Draw messages for this control structure
-            drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
+            // drawMessages(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
+
+            removeControlStructure(parsedDiagram, controlStructure.controlStructureId);
         } else {
             drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram);
-            
         }
     }
 }
 
-// Function to draw a combined fragment's messages (e.g., alt, opt, break)
-function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
-    // Draw messages for the main branch of the control structure
+// Function to draw a combined fragment (e.g., alt, opt, break) and its messages
+function drawMessages(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
+
+    // Draw messages inside the control structure
     controlStructure.messages.forEach((messageId) => {
         const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
         if (message) {
@@ -125,7 +129,7 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
         }
     });
 
-    // Handle the else alternatives if present
+    // Handle the alternatives if present
     if (controlStructure.alternatives && Array.isArray(controlStructure.alternatives)) {
         controlStructure.alternatives.forEach((elseBranch) => {
             elseBranch.messages.forEach((messageId) => {
@@ -138,37 +142,49 @@ function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap
     }
 }
 
-// Function to draw a combined fragment (e.g., alt, opt, break)
-function drawFragment(sequenceDiagram, controlStructure, lifelineViewMap) {
+// Function to draw a fragment and calculate height based on the number of messages
+function drawControlStructure(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
 
-    const { xPos1, xPos2 }= getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap);
-    const yPos1 = messagePositionTracker.getPosition().yPos;
-    const yPos2 = yPos1 + calculateFragmentHeight(controlStructure);  // Height is based on the number of messages
+    // Save the current Y position to return to it after drawing the fragment
+    const originalYPos = messagePositionTracker.getPosition().yPos;
+
+    // Calculate the height of the fragment
+    const fragmentHeight = calculateFragmentHeight(controlStructure);
+
+    const { mostLeft, mostRight } = { mostLeft: 20, mostRight: 500 }; // Dummy X positions for now
+    const yPos1 = originalYPos + CONTROL_STRUCTURE_GAP;
+    const yPos2 = yPos1 + fragmentHeight;
+
+    console.log(`Drawing fragment from Y: ${yPos1} to Y: ${yPos2}`);
 
     const combinedFragment = createPositionedModelAndView({
         idType: "UMLCombinedFragment",
         parent: sequenceDiagram._parent,
         diagram: sequenceDiagram,
-        x1: xPos1,
+        x1: mostLeft,
         y1: yPos1,
-        x2: xPos2,
-        y2: yPos2,
+        x2: mostRight,
+        y2: yPos2 + CONTROL_STRUCTURE_GAP + CONTROL_STRUCTURE_HEADER_HEIGHT,
         dictionary: {
             name: controlStructure.type,
             condition: controlStructure.condition
         }
     });
 
-    // Update position for further elements
-    messagePositionTracker.incrementPosition(0, yPos2 - yPos1 + CONTROL_STRUCTURE_GAP);
+    // Now reset the Y position back to the top of the fragment (yPos1) to place the messages
+    messagePositionTracker.setPosition({ xPos: messagePositionTracker.getPosition().xPos, yPos: yPos1 });
+    
+    // Draw the messages in the fragment
+    drawMessages(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
+
+    // Once all messages in the fragment are drawn, update the position tracker for future elements below the fragment
+    messagePositionTracker.setPosition({ xPos: messagePositionTracker.getPosition().xPos, yPos: yPos2 + CONTROL_STRUCTURE_GAP });
 }
 
 // Function to draw a message
 function drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram) {
 
     const { yPos } = messagePostionTrackerUpdate();
-
-    console.log("Msg: " + message.messageId + " is printed at " + yPos);
 
     const fromLifeline = lifelineViewMap[message.from];
     const toLifeline = lifelineViewMap[message.to];
@@ -207,6 +223,27 @@ function removeMessageById(parsedDiagram, messageId) {
     }
 }
 
+// Function to remove a control structure from parsedDiagram
+function removeControlStructure(parsedDiagram, controlStructureId) {
+    const controlStructureIndex = parsedDiagram.controlStructures.findIndex(cs => cs.controlStructureId === controlStructureId);
+    if (controlStructureIndex > -1) {
+        parsedDiagram.controlStructures.splice(controlStructureIndex, 1);  // Remove the control structure from the array
+    }
+}
+
+// Helper function to calculate the height of the fragment based on the number of messages, including alternatives
+function calculateFragmentHeight(controlStructure) {
+    let totalMessages = controlStructure.messages.length;
+
+    if (controlStructure.alternatives && Array.isArray(controlStructure.alternatives)) {
+        controlStructure.alternatives.forEach(alt => {
+            totalMessages += alt.messages.length;
+        });
+    }
+
+    return CONTROL_STRUCTURE_HEADER_HEIGHT + (totalMessages * MESSAGE_HEIGHT);
+}
+
 // Function to update the position tracker for messages
 function messagePostionTrackerUpdate() {
     messagePositionTracker.incrementPosition(0, MESSAGE_HEIGHT);
@@ -220,35 +257,6 @@ function extendLifelineHeight(lifeline, yPos) {
     if (yPos > lifelineY2) {
         app.engine.setProperty(lifeline, 'height', yPos);
     }
-}
-
-// Get the horizontal boundary of the lifelines involved in a control structure
-function getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap) {
-    let mostLeft = Infinity;
-    let mostRight = -Infinity;
-
-    controlStructure.messages.forEach(messageId => {
-        const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
-        if (message) {
-            // Calculate the left and right bounds of the 'from' and 'to' lifelines
-            const fromLifelineLeft = lifelineViewMap[message.from].left;
-            const fromLifelineRight = lifelineViewMap[message.from].right || fromLifelineLeft; // Use right if available
-            const toLifelineLeft = lifelineViewMap[message.to].left;
-            const toLifelineRight = lifelineViewMap[message.to].right || toLifelineLeft; // Use right if available
-
-            // Update mostLeft and mostRight accordingly
-            mostLeft = Math.min(mostLeft, fromLifelineLeft, toLifelineLeft);
-            mostRight = Math.max(mostRight, fromLifelineRight, toLifelineRight);
-        }
-    });
-
-    return { mostLeft, mostRight };
-}
-
-// Helper function to calculate the height of the fragment based on the number of messages
-function calculateFragmentHeight(controlStructure) {
-    const messageCount = controlStructure.messages.length;
-    return CONTROL_STRUCTURE_HEADER_HEIGHT + (messageCount * MESSAGE_HEIGHT);
 }
 
 module.exports = { generateSequenceDiagram };
