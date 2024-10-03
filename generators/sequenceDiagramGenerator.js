@@ -24,7 +24,7 @@ const {
 
 const LIFELINE_MARGIN = 80;
 const LIFELINE_NAME_MARGIN = 10;
-const MESSAGE_HEIGHT = 50;
+const MESSAGE_HEIGHT = 70;
 const CONTROL_STRUCTURE_HEADER_HEIGHT = 10;
 const CONTROL_STRUCTURE_GAP = 20; 
 
@@ -33,7 +33,7 @@ const lifelineViewMap = {};
 
 // Initialize position and dimension trackers
 const lifelinePositionTracker = positionTracker({ xPos: 50, yPos: 20 });
-const messagePositionTracker = positionTracker({ xPos: 0, yPos: 100 }, 0, MESSAGE_HEIGHT);
+const messagePositionTracker = positionTracker({ xPos: 0, yPos: 50 }, 0, MESSAGE_HEIGHT);
 
 // Function to generate a Sequence Diagram
 function generateSequenceDiagram(project, parsedDiagram) {
@@ -166,9 +166,15 @@ function drawControlStructure(sequenceDiagram, controlStructure, lifelineViewMap
         x2: mostRight,
         y2: yPos2 + CONTROL_STRUCTURE_GAP + CONTROL_STRUCTURE_HEADER_HEIGHT,
         dictionary: {
-            name: controlStructure.type,
-            condition: controlStructure.condition
+            name: controlStructure.type + " Fragment"
         }
+    });
+
+    app.engine.setProperty(combinedFragment.model, 'interactionOperator', controlStructure.type);
+
+    combinedFragment.model.operands.forEach(operand => {
+        app.engine.setProperty(operand, 'name', controlStructure.condition);
+        app.engine.setProperty(operand, 'guard', controlStructure.condition);
     });
 
     // Now reset the Y position back to the top of the fragment (yPos1) to place the messages
