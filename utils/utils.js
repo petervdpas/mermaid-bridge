@@ -166,72 +166,38 @@ const mapClassVisibilityToSymbol = visibility => ({
     'package': '~'
 }[visibility] || '~');
 
-// Generic position tracker for both X and Y axes with configurable initial position and adders
-function positionTracker(initialPosition = { x: 0, y: 0 }, xAdder = 1, yAdder = 1) {
-    let position = { ...initialPosition }; // Copy the initial position
+// Position tracker specifically for xPos and yPos with configurable initial position and adders
+function positionTracker(initialPosition = { xPos: 0, yPos: 0 }, xAdder = 1, yAdder = 1) {
+    let position = { ...initialPosition }; // Track xPos and yPos
 
     return {
-        // Get the current position
+        // Get the current xPos and yPos
         getPosition: function() {
             return { ...position };  // Return a copy of the position
         },
 
-        // Increment the position by the adders
+        // Increment the xPos and yPos by specified deltas or default adders
         incrementPosition: function(deltaX = xAdder, deltaY = yAdder) {
-            position.x += deltaX;
-            position.y += deltaY;
+            position.xPos += deltaX;
+            position.yPos += deltaY;
         },
 
-        // Set the position to a specific tuple
+        // Set the position to a specific xPos and yPos
         setPosition: function(newPosition) {
-            position = { ...newPosition }; // Overwrite position with the new tuple
+            if (newPosition && typeof newPosition.xPos === 'number' && typeof newPosition.yPos === 'number') {
+                position = { ...newPosition }; // Overwrite position with new xPos and yPos
+            }
         },
 
-        // Reset position to initial values
+        // Reset position to initial xPos and yPos values
         resetPosition: function() {
-            position = { ...initialPosition }; // Reset to the initial position
+            position = { ...initialPosition }; // Reset to the initial xPos and yPos
         },
 
-        // Update the adders for X and Y
+        // Update the adders for xPos and yPos
         setAdders: function(newXAdder, newYAdder) {
             xAdder = newXAdder;
             yAdder = newYAdder;
-        }
-    };
-}
-
-// Generic dimension calculator for bounding boxes with configurable initial dimensions and increments
-function dimensionCalculator() {
-    let dimensions = { x1: 0, y1: 0, x2: 0, y2: 0 };
-
-    return {
-        // Get the current dimensions (bounding box)
-        getDimensions: function() {
-            return { ...dimensions };  // Return a copy of the dimensions
-        },
-
-        // Set specific dimensions (bounding box)
-        setDimensions: function(newX1, newY1, newX2, newY2) {
-            dimensions.x1 = newX1;
-            dimensions.y1 = newY1;
-            dimensions.x2 = newX2;
-            dimensions.y2 = newY2;
-        },
-
-        // Increment dimensions (expand bounding box)
-        incrementDimensions: function(deltaX1 = 0, deltaY1 = 0, deltaX2 = 0, deltaY2 = 0) {
-            dimensions.x1 += deltaX1;
-            dimensions.y1 += deltaY1;
-            dimensions.x2 += deltaX2;
-            dimensions.y2 += deltaY2;
-        },
-
-        // Reset dimensions to defaults
-        resetDimensions: function() {
-            dimensions.x1 = 0;
-            dimensions.y1 = 0;
-            dimensions.x2 = 0;
-            dimensions.y2 = 0;
         }
     };
 }
@@ -316,7 +282,6 @@ module.exports = {
     mapSymbolToClassVisibility, 
     mapClassVisibilityToSymbol,
     positionTracker,
-    dimensionCalculator,
     skipMetadataAndCommentLines,
     determineDiagramType,
     shouldIgnoreLine,

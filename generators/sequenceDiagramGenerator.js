@@ -30,8 +30,8 @@ const lifelinePositionMap = {};
 const lifelineViewMap = {};
 
 // Initialize position and dimension trackers
-const lifelinePositionTracker = positionTracker({ x: 50, y: 120 });
-const messagePositionTracker = positionTracker({ x: 0, y: 150 }, 0, MESSAGE_HEIGHT);
+const lifelinePositionTracker = positionTracker({ xPos: 50, yPos: 20 });
+const messagePositionTracker = positionTracker({ xPos: 0, yPos: 100 }, 0, MESSAGE_HEIGHT);
 
 // Function to generate a Sequence Diagram
 function generateSequenceDiagram(project, parsedDiagram) {
@@ -58,17 +58,16 @@ function generateSequenceDiagram(project, parsedDiagram) {
         let nameLength = participantAlias.length;
 
         // Use position tracker to set X positions dynamically
-        const { x } = lifelinePositionTracker.getPosition();
-        const y = 20;
+        const { xPos, yPos } = lifelinePositionTracker.getPosition();
 
         const lifelineView = createPositionedModelAndView({
             idType: "UMLLifeline",
             parent: sequenceDiagram._parent, 
             diagram: sequenceDiagram,
-            x1: x + accumulatedMargin,
-            y1: y,
-            x2: x + accumulatedMargin,
-            y2: y,
+            x1: xPos + accumulatedMargin,
+            y1: yPos,
+            x2: xPos + accumulatedMargin,
+            y2: yPos,
             dictionary: {
                 name: participantAlias
             }
@@ -79,7 +78,7 @@ function generateSequenceDiagram(project, parsedDiagram) {
             app.engine.setProperty(role, 'name', participant.name);
         }
 
-        lifelinePositionMap[participant.name] = { left: x, top: y };
+        lifelinePositionMap[participant.name] = { left: xPos, top: yPos };
 
         lifelineViewMap[participant.name] = lifelineView;
 
@@ -89,8 +88,6 @@ function generateSequenceDiagram(project, parsedDiagram) {
         // Increment X position for the next participant
         lifelinePositionTracker.incrementPosition(accumulatedMargin, 0);
     });
-
-    console.log(lifelinePositionMap);
 
     // Handle control structures and messages
     handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, lifelineViewMap);
@@ -107,15 +104,41 @@ function handleMessagesAndControlStructures(sequenceDiagram, parsedDiagram, life
             const controlStructure = parsedDiagram.controlStructures.find(
                 cs => cs.controlStructureId === message.controlStructureId);
 
-            console.log(controlStructure);
-            //drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram, globalYPosition);
+            if (controlStructure) {
+                // Draw messages for this control structure
+                drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram);
+            }
         } else {
-            const { yPos } = messagePositionTracker.getPosition();
-            drawMessage(sequenceDiagram, message, lifelineViewMap, yPos);
-            messagePositionTracker.incrementPosition(0, MESSAGE_HEIGHT);
+            
+            drawMessage(sequenceDiagram, message, lifelineViewMap, messagePostionTrackerUpdate());
+            removeMessageById(parsedDiagram, message.messageId);
         }
+    }
+}
 
-        parsedDiagram.messages.shift();
+// Function to draw a combined fragment's messages (e.g., alt, opt, break)
+function drawCombinedFragment(sequenceDiagram, controlStructure, lifelineViewMap, parsedDiagram) {
+    // Draw messages for the main branch of the control structure
+    controlStructure.messages.forEach((messageId) => {
+        const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
+        if (message) {
+            
+            drawMessage(sequenceDiagram, message, lifelineViewMap, messagePostionTrackerUpdate());
+            removeMessageById(parsedDiagram, messageId);
+        }
+    });
+
+    // Handle the else alternatives if present
+    if (controlStructure.alternatives && Array.isArray(controlStructure.alternatives)) {
+        controlStructure.alternatives.forEach((elseBranch) => {
+            elseBranch.messages.forEach((messageId) => {
+                const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
+                if (message) {
+                    drawMessage(sequenceDiagram, message, lifelineViewMap, messagePostionTrackerUpdate());
+                    removeMessageById(parsedDiagram, messageId);
+                }
+            });
+        });
     }
 }
 
@@ -142,6 +165,20 @@ function drawMessage(sequenceDiagram, message, lifelineViewMap, yPos) {
             messageSort: message.type
         }
     });
+}
+
+// Function to remove a message from parsedDiagram.messages by messageId
+function removeMessageById(parsedDiagram, messageId) {
+    const messageIndex = parsedDiagram.messages.findIndex(msg => msg.messageId === messageId);
+    if (messageIndex > -1) {
+        parsedDiagram.messages.splice(messageIndex, 1);  // Remove the message from the array
+    }
+}
+
+function messagePostionTrackerUpdate() {
+    messagePositionTracker.incrementPosition(0, MESSAGE_HEIGHT);
+    const { yPos } = messagePositionTracker.getPosition();
+    return yPos;
 }
 
 module.exports = { generateSequenceDiagram };
