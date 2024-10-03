@@ -24,7 +24,7 @@ const {
 
 const LIFELINE_MARGIN = 80;
 const LIFELINE_NAME_MARGIN = 10;
-const MESSAGE_HEIGHT = 70;
+const MESSAGE_HEIGHT = 64;
 const CONTROL_STRUCTURE_HEADER_HEIGHT = 10;
 const CONTROL_STRUCTURE_GAP = 20; 
 
@@ -148,7 +148,8 @@ function drawControlStructure(sequenceDiagram, controlStructure, lifelineViewMap
     const fragmentHeight = calculateFragmentHeight(controlStructure);
 
     const { mostLeft, mostRight } = getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap, parsedDiagram);
-    
+    console.log("Most left: ", mostLeft, "Most right: ", mostRight);
+
     const yPos1 = originalYPos + CONTROL_STRUCTURE_GAP;
     const yPos2 = yPos1 + fragmentHeight;
 
@@ -260,9 +261,38 @@ function extendLifelineHeight(lifeline, yPos) {
     }
 }
 
+// Get the horizontal boundaries of the lifelines involved in a control structure
 function getInvolvedLifelinesHorizontalBoundary(controlStructure, lifelineViewMap, parsedDiagram) {
 
-    return { mostLeft: 20, mostRight: 500 }; // Dummy X positions for now
+    let mostLeft = null;
+    let mostRight = null;
+
+    controlStructure.messages.forEach(messageId => {
+        const message = parsedDiagram.messages.find(msg => msg.messageId === messageId);
+        if (message) {
+            const fromLifeline = lifelineViewMap[message.from];
+            const toLifeline = lifelineViewMap[message.to];
+
+            // Use left edge for mostLeft and right edge for mostRight
+            const fromLifelineLeft = fromLifeline.left;
+            const toLifelineRight = toLifeline.left + (toLifeline.width || 0);
+
+            // Set initial values for mostLeft and mostRight based on the first lifeline positions found
+            if (mostLeft === null || mostRight === null) {
+                mostLeft = fromLifelineLeft;
+                mostRight = toLifelineRight;
+            }
+
+            // Update mostLeft and mostRight to ensure we get the true boundaries
+            mostLeft = Math.min(mostLeft, fromLifelineLeft, toLifeline.left);
+            mostRight = Math.max(mostRight, fromLifelineLeft + fromLifeline.width, toLifelineRight);
+        }
+    });
+
+    return {
+        mostLeft: mostLeft !== null ? mostLeft : 0,
+        mostRight: mostRight !== null ? mostRight : 0
+    };
 }
 
 module.exports = { generateSequenceDiagram };
