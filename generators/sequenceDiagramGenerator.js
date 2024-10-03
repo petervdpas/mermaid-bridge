@@ -1,19 +1,5 @@
 // generators/generateSequenceDiagram.js
 
-/*
-- draw the lifelines
-	- calculate the width of the beginning of first lifeline till the end of the second lifeline
-	- calculate the width of the beginning of second lifeline till the end of the third lifeline
-	- calculate the width of the beginning of third lifeline till the end of the fourth lifeline
-	- etc depending on the number of lifelines and store these values in a map with the first lifeline name as key
-- draw a message or a fragment which ever comes first
-	- the height of a message is always the same, and width is done by connecting it from and to 2 lifelines
-	- the height of a fragment is first determined by a header size and the amount of messages (plus one) in the fragment (including the alternative messages)
-	- the width (and the starting position on the X-axis) of a fragment is determined by the space between the most left lifeline and the most right lifeline of the messages in the fragment
-- between a message or a fragment which ever comes next, is always a small space (gap) over the Y-axis
-- messages in a fragment get set to the position on the Y-axis to the top of their fragment plus its header, so make sure a fragment height can accommodate that
-*/
-
 const { positionTracker } = require('../utils/utils');
 const {
     createDiagram,
