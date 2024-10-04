@@ -181,8 +181,7 @@ function drawMessage(sequenceDiagram, message, lifelineViewMap, parsedDiagram) {
     const toX = lifelinePositionMap[message.to].left;
 
     // Extend lifelines if necessary
-    extendLifelineHeight(fromLifeline, yPos);
-    extendLifelineHeight(toLifeline, yPos);
+    extendLifelinesHeight(lifelineViewMap, yPos);
 
     createPositionedDirectedModelAndView({
         idType: "UMLMessage",
@@ -238,13 +237,15 @@ function messagePostionTrackerUpdate() {
     return messagePositionTracker.getPosition();
 }
 
-// Helper function to extend a lifeline if the Y position exceeds its current height
-function extendLifelineHeight(lifeline, yPos) {
-    const lifelineY2 = lifeline.height;
-
-    if (yPos > lifelineY2) {
-        app.engine.setProperty(lifeline, 'height', yPos);
-    }
+// Helper function to extend all lifelines' height if the Y position exceeds their current height
+function extendLifelinesHeight(lifelineViewMap, yPos) {
+    let newHeight = yPos - CONTROL_STRUCTURE_HEADER_HEIGHT;
+    Object.values(lifelineViewMap).forEach(lifelineView => {
+        const currentHeight = lifelineView.height || 0;
+        if (yPos > currentHeight) {
+            app.engine.setProperty(lifelineView, 'height', newHeight);
+        }
+    });
 }
 
 // Get the horizontal boundaries of the lifelines involved in a control structure
