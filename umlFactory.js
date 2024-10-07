@@ -116,6 +116,8 @@ function addERDElement(elemType, parent, field, inElements) {
     var keys = inElements.keys || [];
     var properties = inElements.properties || {}; 
 
+    console.log(inElements.type);
+    
     app.factory.createModel({
         id: elemType,
         parent: parent,
