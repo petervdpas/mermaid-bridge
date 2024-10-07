@@ -10,7 +10,8 @@ function parseERDiagramRelationship(line, relationships) {
 
     // Split the line into the relationship part and the label part (after the colon)
     const [relationshipPart, labelPart] = line.split(':').map(part => part.trim());
-    const label = labelPart || null;  // The label (e.g., "uses")
+    //const label = labelPart || null;  // The label (e.g., "uses")
+    const label = labelPart === '""' ? "" : labelPart || null;  // The label (e.g., "uses")
 
     // First, find the connector (either IsStrong or IsWeak)
     const connectorPattern = relationshipTypes['erDiagram'].find(rel =>
