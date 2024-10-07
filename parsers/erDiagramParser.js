@@ -100,10 +100,12 @@ function parseERDiagram(lines, jsonResult) {
             const match = line.match(regex);
 
             if (match) {
+                
                 const [_, type, name, keyString = '', propertiesString = ''] = match;
                 
+                // Extract the length from the type if present (e.g., varchar(255))
                 const length = type.includes('(') ? type.split('(')[1].split(')')[0] : null;
-                const reTyped = type.replace(`(${length})`, '');
+                const reTyped = type.replace(`(${length})`, ''); // Remove the length part from the type
 
                 // Parse keys and properties
                 const fieldKeys = parseKeys(keyString.trim());
@@ -113,14 +115,15 @@ function parseERDiagram(lines, jsonResult) {
                 if (length) {
                     fieldProps['length'] = length;
                 }
-                
+
                 // Push the parsed field into the current entity
                 currentElement.columns.push({
-                    type: reTyped,
-                    name: name,
-                    keys: fieldKeys, 
-                    properties: fieldProps
+                    type: reTyped,      // Field type (e.g., varchar, without the length)
+                    name: name,         // Field name (e.g., CrohoNaam)
+                    keys: fieldKeys,    // Parsed keys (e.g., PK, FK)
+                    properties: fieldProps // Additional properties including length and nullable
                 });
+
             } else {
                 console.warn(`Unrecognized line in entity: ${line}`);
             }
