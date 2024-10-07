@@ -94,16 +94,21 @@ function parseERDiagram(lines, jsonResult) {
         }
         // Parsing fields (attributes) inside an entity (e.g., "string name")
         else if (currentElement && /\S+\s+\S+/.test(line)) {
-            const regex = /(\S+)\s+(\S+)\s*([A-Za-z,]+)?\s*(?:"([^"]+)")?/;  // Regex pattern to match type, name, keys, and properties
+            const regex = /(\S+)(?:\((\d+)\))?\s+(\S+)\s*([A-Za-z,]+)?\s*(?:"([^"]+)")?/;
             const match = line.match(regex);
 
             if (match) {
-                const [_, type, name, keyString = '', propertiesString = ''] = match;
+                const [_, type, length, name, keyString = '', propertiesString = ''] = match;
 
                 // Parse keys and properties
                 const fieldKeys = parseKeys(keyString.trim());
                 const fieldProps = parseFieldProperties(`"${propertiesString}"`); 
 
+                // If there's a length, add it to the properties
+                if (length) {
+                    fieldProps['length'] = length;
+                }
+                
                 // Push the parsed field into the current entity
                 currentElement.columns.push({
                     type: type,

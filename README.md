@@ -126,11 +126,11 @@ author: Peter van de Pas
 ---
 erDiagram
     CUSTOMER {
-        varchar name "length: 100, nullable: true"
+        varchar(100) name "nullable: true"
         int age "nullable: true"
     }
     ORDER {
-        varchar orderNumber "length: 20, nullable: true"
+        varchar(20) orderNumber "nullable: true"
         date orderDate "nullable: true"
     }
     LINE-ITEM {
@@ -138,9 +138,9 @@ erDiagram
         decimal price "nullable: true"
     }
     DELIVERY-ADDRESS {
-        varchar street "length: 100, nullable: true"
-        varchar city "length: 50, nullable: true"
-        varchar postalCode "length: 10, nullable: true"
+        varchar(100) street "nullable: true"
+        varchar(50) city "nullable: true"
+        varchar(10) postalCode "nullable: true"
     }
 
     CUSTOMER ||--o{ ORDER : places
